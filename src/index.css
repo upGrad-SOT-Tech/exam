@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+
+html.exam-lockdown,
+html.exam-lockdown body,
+html.exam-lockdown #root,
+html.exam-lockdown * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+}
+
+html.exam-lockdown input,
+html.exam-lockdown textarea {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
