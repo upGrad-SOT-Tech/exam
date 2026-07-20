@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getExamDb } from "../../db/mongo.js";
 import { requireAuth } from "../../middleware/auth.middleware.js";
 import { AppError } from "../../shared/errors.js";
+import { resolveCandidateTargeting, studentMatchesTargeting } from "./targeting.js";
 
 const router = Router();
 
@@ -79,9 +80,18 @@ async function getPublishedExam(id) {
   return exam;
 }
 
+// Guards a single exam against the caller's assignment. Reports 404 (not 403) so an unassigned
+// exam is indistinguishable from a non-existent one — a candidate can't probe for others' papers.
+async function assertAssigned(exam, email) {
+  const context = await resolveCandidateTargeting(email);
+  if (!studentMatchesTargeting(context, exam.targeting || {})) {
+    throw new AppError("Exam not found", 404, "EXAM_NOT_FOUND");
+  }
+}
+
 router.use(requireAuth);
 
-router.get("/", async (_req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
     const now = new Date();
     const items = await exams()
@@ -93,7 +103,12 @@ router.get("/", async (_req, res, next) => {
       .sort({ availableUntil: 1 })
       .toArray();
 
-    res.json({ exams: items.map(publicExam) });
+    // Only the papers assigned to this candidate (by the LMS's targeting). Resolve the candidate's
+    // profile once, then filter — an unassigned exam must never appear on their home screen.
+    const context = await resolveCandidateTargeting(req.user.email);
+    const assigned = items.filter((exam) => studentMatchesTargeting(context, exam.targeting || {}));
+
+    res.json({ exams: assigned.map(publicExam) });
   } catch (err) {
     next(err);
   }
@@ -102,6 +117,7 @@ router.get("/", async (_req, res, next) => {
 router.get("/:examId", async (req, res, next) => {
   try {
     const exam = await getPublishedExam(req.params.examId);
+    await assertAssigned(exam, req.user.email);
     res.json({ exam: studentExam(exam) });
   } catch (err) {
     next(err);
@@ -111,6 +127,7 @@ router.get("/:examId", async (req, res, next) => {
 router.post("/:examId/attempts", async (req, res, next) => {
   try {
     const exam = await getPublishedExam(req.params.examId);
+    await assertAssigned(exam, req.user.email);
     const now = new Date();
     const existing = await attempts().findOne({
       examId: exam._id,
@@ -164,6 +181,7 @@ router.post("/:examId/events", async (req, res, next) => {
     const parsed = eventSchema.safeParse(req.body);
     if (!parsed.success) throw new AppError("Invalid event", 400, "INVALID_EVENT");
     const exam = await getPublishedExam(req.params.examId);
+    await assertAssigned(exam, req.user.email);
 
     await preExamEvents().insertOne({
       examId: exam._id,
