@@ -34,10 +34,15 @@ export function studentMatchesTargeting(targeting, student) {
   // When cohorts are selected, they are the source of truth for who can take the exam.
   // Campus / program / batch on the form are picker helpers and may store ObjectIds that
   // don't exist on the student profile — don't AND them or nobody matches.
+  // `cohortId`/`cohortName` are the engagement (builder) cohort; `cohortIds`/`cohortNames` are every
+  // active LMS academic section the student is enrolled in — which is what the scheduler targets.
+  // Match the union so a student in a builder cohort AND a section still gets their exam.
   if (targeting.cohortIds?.length) {
+    const ids = [student.cohortId, ...(student.cohortIds || [])];
+    const names = [student.cohortName, ...(student.cohortNames || [])];
     return (
-      includesNormalized(targeting.cohortIds, student.cohortId) ||
-      includesNormalized(targeting.cohortIds, student.cohortName)
+      ids.some((id) => includesNormalized(targeting.cohortIds, id)) ||
+      names.some((name) => includesNormalized(targeting.cohortIds, name))
     );
   }
 
