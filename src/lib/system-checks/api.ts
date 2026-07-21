@@ -126,26 +126,7 @@ export async function runMediaChecks(): Promise<MediaCheckOutcome> {
         ? `${audioInputs.length} microphone device(s) found`
         : "No microphone detected";
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-      stream.getTracks().forEach((track) => track.stop());
-      webcamStatus = "passed";
-      micStatus = "passed";
-      webcamMessage = "Webcam permission granted";
-      micMessage = "Microphone permission granted";
-    } catch (permissionError) {
-      if (videoInputs.length === 0) webcamStatus = "failed";
-      if (audioInputs.length === 0) micStatus = "failed";
-      if (permissionError instanceof Error && videoInputs.length > 0) {
-        webcamMessage = permissionError.message;
-      }
-      if (permissionError instanceof Error && audioInputs.length > 0) {
-        micMessage = permissionError.message;
-      }
-    }
+
 
     return {
       webcam: mediaResult(

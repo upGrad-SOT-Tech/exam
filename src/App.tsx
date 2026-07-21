@@ -1,18 +1,22 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import ChecksGate from '@/components/system-checks/ChecksGate'
 import { useAuth } from '@/context/AuthContext'
+import AppShell from '@/layouts/AppShell'
 import { useDeepLinkLaunch } from '@/lib/deep-link/useDeepLinkLaunch'
+import DashboardPage from '@/pages/DashboardPage'
 import ExamPlayerPage from '@/pages/ExamPlayerPage'
-import HomePage from '@/pages/HomePage'
+import ExamsPage from '@/pages/ExamsPage'
+import HistoryPage from '@/pages/HistoryPage'
 import LoginPage from '@/pages/LoginPage'
 import PreExamPage from '@/pages/PreExamPage'
+import ProfilePage from '@/pages/ProfilePage'
 import SystemChecksPage from '@/pages/SystemChecksPage'
 
 function GuestOnly({ children }: { children: React.ReactNode }) {
   const { status } = useAuth()
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8f9fb] text-sm text-gray-600">
+      <div className="flex min-h-screen items-center justify-center bg-canvas font-sans text-sm text-gray-600">
         Loading…
       </div>
     )
@@ -25,7 +29,7 @@ function Protected({ children }: { children: React.ReactNode }) {
   const { status } = useAuth()
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8f9fb] text-sm text-gray-600">
+      <div className="flex min-h-screen items-center justify-center bg-canvas font-sans text-sm text-gray-600">
         Loading…
       </div>
     )
@@ -41,7 +45,7 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/system-checks" element={<SystemChecksPage />} />
+      <Route path="/system-checks" element={<SystemChecksPage mode="gate" />} />
       <Route
         path="/login"
         element={
@@ -53,13 +57,18 @@ export default function App() {
         }
       />
       <Route
-        path="/home"
         element={
           <Protected>
-            <HomePage />
+            <AppShell />
           </Protected>
         }
-      />
+      >
+        <Route path="/home" element={<DashboardPage />} />
+        <Route path="/exams" element={<ExamsPage />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/system-check" element={<SystemChecksPage mode="app" />} />
+      </Route>
       <Route
         path="/exams/:examId/start"
         element={
