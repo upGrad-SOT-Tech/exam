@@ -74,11 +74,11 @@ export default function SystemChecksPage({ mode = 'gate' }: SystemChecksPageProp
         </div>
       ) : null}
 
-      <div className={`flex min-h-0 flex-col gap-3 ${inApp ? '' : 'h-full'}`}>
+      <div className={`flex min-h-0 flex-col gap-4 ${inApp ? '' : 'h-full'}`}>
         <CheckSummaryBar checks={checks} isRunning={isRunning} hasPassed={hasPassed} />
 
         <div
-          className={`grid gap-3 lg:grid-cols-[1.45fr_0.75fr] ${
+          className={`grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.72fr)] ${
             inApp ? '' : 'min-h-0 flex-1'
           }`}
         >
@@ -86,7 +86,7 @@ export default function SystemChecksPage({ mode = 'gate' }: SystemChecksPageProp
             <CheckResultsGrid checks={checks} isRunning={isRunning} />
           </div>
           <div className={inApp ? '' : 'min-h-0 overflow-y-auto lg:max-h-full'}>
-            <CheckAttentionPanel items={attentionItems} />
+            <CheckAttentionPanel items={attentionItems} onResolved={() => void runChecks()} />
           </div>
         </div>
       </div>
@@ -148,20 +148,23 @@ export default function SystemChecksPage({ mode = 'gate' }: SystemChecksPageProp
   }
 
   return (
-    <div className="flex h-screen flex-col bg-[#f8f9fb]">
-      <header className="shrink-0 border-b border-gray-200 bg-white px-5 py-4">
-        <div className="flex items-center justify-between gap-4">
-          <div>
+    <div className="flex h-screen flex-col bg-[#f3f4f7]">
+      <header className="shrink-0 border-b border-gray-200/80 bg-white px-5 py-4 sm:px-8 lg:px-10">
+        <div className="mx-auto flex w-full max-w-6xl items-start justify-between gap-4">
+          <div className="min-w-0">
             <img src="/assets/upgradsot_logo_small.png" alt="upGrad" className="h-8" />
-            <h1 className="mt-2 text-2xl font-extrabold text-[#df2428]">System readiness</h1>
-            <p className="mt-1 text-sm text-gray-700">
-              All checks must pass before you sign in. Close any blocked apps shown on the right.
+            <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-[#df2428]">
+              System readiness
+            </h1>
+            <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-gray-600">
+              All checks must pass before you sign in. Close blocked processes on the right, then
+              continue.
             </p>
           </div>
           <div className="hidden shrink-0 sm:block">
             <button
               type="button"
-              className="rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isRunning || !desktopAvailable}
               onClick={() => void runChecks()}
             >
@@ -171,19 +174,21 @@ export default function SystemChecksPage({ mode = 'gate' }: SystemChecksPageProp
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-hidden px-5 py-4">{body}</main>
+      <main className="min-h-0 flex-1 overflow-hidden px-5 py-5 sm:px-8 sm:py-6 lg:px-10">
+        <div className="mx-auto h-full max-w-6xl">{body}</div>
+      </main>
 
-      <footer className="shrink-0 border-t border-gray-200 bg-white px-5 py-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <footer className="shrink-0 border-t border-gray-200/80 bg-white px-5 py-3.5 sm:px-8 lg:px-10">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-gray-600">
             {hasPassed
               ? 'Checks passed for this session.'
-              : 'Close blocked apps, then re-run checks.'}
+              : 'Close blocked processes, then re-run checks.'}
           </p>
           <div className="flex gap-2 sm:hidden">
             <button
               type="button"
-              className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800"
+              className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-800"
               disabled={isRunning || !desktopAvailable}
               onClick={() => void runChecks()}
             >
@@ -192,7 +197,7 @@ export default function SystemChecksPage({ mode = 'gate' }: SystemChecksPageProp
           </div>
           <button
             type="button"
-            className={`${primaryButtonClass} w-full sm:w-auto`}
+            className={`${primaryButtonClass} w-full rounded-xl sm:w-auto`}
             disabled={!hasPassed}
             onClick={() => navigate('/login', { replace: true })}
           >

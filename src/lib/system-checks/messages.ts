@@ -75,7 +75,7 @@ const CHECK_COPY: Partial<
   screen_recording: {
     title: "Screen recording software",
     summary: "Screen recording tools are not allowed during the exam.",
-    fixHint: "Quit all recording or streaming apps.",
+    fixHint: "Use Close on the process card, then re-run checks.",
   },
   clipboard: {
     title: "Clipboard not empty",
