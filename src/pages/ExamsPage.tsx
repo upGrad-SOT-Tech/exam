@@ -58,18 +58,28 @@ export default function ExamsPage() {
       all: summary?.examCounts.all ?? exams.length,
       available:
         summary?.examCounts.available ??
-        exams.filter((exam) => exam.availability === 'available').length,
+        exams.filter(
+          (exam) => exam.availability === 'available' && exam.attemptStatus !== 'submitted',
+        ).length,
       upcoming:
         summary?.examCounts.upcoming ??
         exams.filter((exam) => exam.availability === 'upcoming').length,
-      completed: summary?.examCounts.completed ?? summary?.submittedCount ?? 0,
+      completed:
+        summary?.examCounts.completed ??
+        exams.filter((exam) => exam.attemptStatus === 'submitted').length,
     }),
     [exams, summary],
   )
 
   const visible = useMemo(() => {
-    if (filter === 'completed') return []
-    if (filter === 'available') return exams.filter((exam) => exam.availability === 'available')
+    if (filter === 'completed') {
+      return exams.filter((exam) => exam.attemptStatus === 'submitted')
+    }
+    if (filter === 'available') {
+      return exams.filter(
+        (exam) => exam.availability === 'available' && exam.attemptStatus !== 'submitted',
+      )
+    }
     if (filter === 'upcoming') return exams.filter((exam) => exam.availability === 'upcoming')
     return exams
   }, [exams, filter])
@@ -155,13 +165,13 @@ export default function ExamsPage() {
           </div>
         ) : null}
 
-        {!loading && filter === 'completed' ? (
+        {!loading && filter === 'completed' && visible.length === 0 ? (
           <div className="rounded-3xl border border-gray-200 bg-white p-8 text-center text-sm text-gray-500">
-            Completed attempts are listed in{' '}
+            No completed exams yet. Submitted attempts also appear in{' '}
             <Link to="/history" className="font-semibold text-[#df2428]">
               History
             </Link>
-            {counts.completed ? ` (${counts.completed})` : ''}.
+            .
           </div>
         ) : null}
 
@@ -172,7 +182,9 @@ export default function ExamsPage() {
         ) : null}
 
         {visible.map((exam, index) => {
-          const canStart = exam.availability === 'available'
+          const isSubmitted = exam.attemptStatus === 'submitted'
+          const isInProgress = exam.attemptStatus === 'in_progress'
+          const canStart = exam.availability === 'available' && !isSubmitted
           return (
             <article
               key={exam.id}
@@ -195,7 +207,11 @@ export default function ExamsPage() {
                     </span>
                     <span>{exam.totalMarks} marks</span>
                     <span className="rounded-full bg-gray-100 px-2 py-0.5 text-gray-600">
-                      {exam.availability ?? 'published'}
+                      {isSubmitted
+                        ? 'completed'
+                        : isInProgress
+                          ? 'in progress'
+                          : exam.availability ?? 'published'}
                     </span>
                   </p>
                   <h2 className="mt-2 text-xl font-extrabold tracking-tight text-[#0f1115] sm:text-2xl">
@@ -208,9 +224,11 @@ export default function ExamsPage() {
                   <div className="mt-4 flex flex-wrap gap-4 text-xs font-semibold text-gray-500">
                     <span className="inline-flex items-center gap-1.5">
                       <Clock3 className="h-3.5 w-3.5" />
-                      {exam.availability === 'upcoming'
-                        ? opensLabel(exam.availableFrom)
-                        : closesLabel(exam.availableUntil)}
+                      {isSubmitted
+                        ? 'Already submitted'
+                        : exam.availability === 'upcoming'
+                          ? opensLabel(exam.availableFrom)
+                          : closesLabel(exam.availableUntil)}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <ShieldCheck className="h-3.5 w-3.5" />
@@ -222,7 +240,21 @@ export default function ExamsPage() {
                     </span>
                   </div>
                 </div>
-                {canStart ? (
+                {isSubmitted ? (
+                  <Link
+                    to="/history"
+                    className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full border border-gray-200 bg-gray-50 px-5 py-3 text-sm font-bold uppercase tracking-wide text-gray-700 transition hover:bg-gray-100 lg:self-center"
+                  >
+                    View history
+                  </Link>
+                ) : canStart && isInProgress && exam.attemptId ? (
+                  <Link
+                    to={`/exams/${exam.id}/take?attemptId=${exam.attemptId}`}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-[#df2428] px-5 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#c51f23] lg:self-center"
+                  >
+                    Resume exam <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                ) : canStart ? (
                   <Link
                     to={`/exams/${exam.id}/start`}
                     className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-[#df2428] px-5 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#c51f23] lg:self-center"
