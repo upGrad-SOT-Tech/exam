@@ -57,4 +57,18 @@ describe("studentMatchesTargeting", () => {
       false,
     );
   });
+
+  it("uses cohortIds as the audience source of truth when present", () => {
+    const targeting = normalizeTargeting({
+      mode: "filters",
+      campuses: ["DEL"],
+      batches: ["some-batch-object-id"],
+      cohortIds: ["cohort-42"],
+    });
+    assert.equal(studentMatchesTargeting(targeting, student), true);
+    assert.equal(
+      studentMatchesTargeting(targeting, { ...student, cohortId: "other" }),
+      false,
+    );
+  });
 });

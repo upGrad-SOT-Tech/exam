@@ -74,34 +74,40 @@ function publicExam(exam, now = new Date()) {
 
 async function loadStudentAudience(user) {
   if (!user?.sub) return null;
+  const email =
+    user.email != null ? String(user.email).trim().toLowerCase() : null;
+
   const query = ObjectId.isValid(user.sub)
     ? { _id: new ObjectId(user.sub) }
-    : { email: user.email };
+    : { email: email || user.email };
+
   const doc =
     (await getLmsDb().collection("students").findOne(query)) ||
     (await getLmsDb().collection("candidates").findOne(query));
-  if (!doc) {
-    return {
-      id: user.sub,
-      email: user.email,
-      campus: null,
-      cohortId: null,
-      cohortName: null,
-      programName: null,
-      batch: null,
-      batchName: null,
-    };
+
+  const profile = doc?.profileSnapshot || {};
+
+  // Exam targeting expects cohortId/cohortName, but in some setups the student
+  // document doesn't contain it. The enrollment record does.
+  let cohortEnrollment = null;
+  if (email && (!doc?.cohortId || !doc?.cohortName)) {
+    cohortEnrollment = await getLmsDb()
+      .collection("lms_cohort_enrollments")
+      .findOne({ email });
   }
-  const profile = doc.profileSnapshot || {};
+
+  const cohortId = doc?.cohortId || profile?.cohortId || cohortEnrollment?.cohortId || null;
+  const cohortName = doc?.cohortName || profile?.cohortName || cohortEnrollment?.cohortName || null;
+
   return {
-    id: String(doc._id),
-    email: doc.email || user.email,
-    campus: doc.campus || profile.preferredCampus || null,
-    cohortId: doc.cohortId || null,
-    cohortName: doc.cohortName || null,
-    programName: profile.programName || doc.programName || null,
-    batch: doc.batch || profile.batch || null,
-    batchName: doc.batchName || profile.batchName || null,
+    id: doc ? String(doc._id) : user.sub,
+    email: doc?.email || user.email,
+    campus: doc?.campus || profile?.preferredCampus || cohortEnrollment?.campus || null,
+    cohortId: cohortId ? String(cohortId) : null,
+    cohortName: cohortName || null,
+    programName: profile?.programName || doc?.programName || null,
+    batch: doc?.batch || profile?.batch || null,
+    batchName: doc?.batchName || profile?.batchName || null,
   };
 }
 

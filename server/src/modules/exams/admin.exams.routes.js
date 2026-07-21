@@ -13,8 +13,11 @@ const targetingSchema = z.object({
   mode: z.enum(["all", "filters", "individuals"]).default("all"),
   campuses: z.array(z.string()).default([]),
   cohortIds: z.array(z.string()).default([]),
+  cohortLabels: z.array(z.string()).default([]),
   programs: z.array(z.string()).default([]),
+  programLabels: z.array(z.string()).default([]),
   batches: z.array(z.string()).default([]),
+  batchLabels: z.array(z.string()).default([]),
   studentIds: z.array(z.string()).default([]),
   studentEmails: z.array(z.string().email()).default([]),
 });

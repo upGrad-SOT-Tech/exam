@@ -20,11 +20,6 @@ export default function ProfilePage() {
     return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
   }, [displayName])
 
-  const studentCode = useMemo(() => {
-    const seed = (user?.id || user?.email || '0000').replace(/\D/g, '').slice(-4).padStart(4, '0')
-    return `Student ${seed}`
-  }, [user?.email, user?.id])
-
   useEffect(() => {
     let cancelled = false
     setLoading(true)
@@ -62,7 +57,7 @@ export default function ProfilePage() {
             Candidate profile
           </span>
           <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-[#0f1115] sm:text-4xl">
-            {studentCode} · {displayName.split(/\s+/).slice(0, 2).join(' ')}
+            {displayName.split(/\s+/).slice(0, 2).join(' ')}
           </h1>
         </div>
         <Link

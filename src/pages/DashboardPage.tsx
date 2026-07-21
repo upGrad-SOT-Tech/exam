@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ArrowUpRight,
@@ -63,10 +63,7 @@ export default function DashboardPage() {
 
   const displayName = user?.fullName || user?.name || 'Student'
   const shortName = displayName.split(/\s+/)[0] || 'Student'
-  const studentCode = useMemo(() => {
-    const seed = (user?.id || user?.email || '0000').replace(/\D/g, '').slice(-4).padStart(4, '0')
-    return `Student ${seed}`
-  }, [user?.email, user?.id])
+  
   const cohort = user?.cohortName || user?.programName || null
 
   useEffect(() => {
@@ -134,7 +131,7 @@ export default function DashboardPage() {
             {cohort ? ` · Cohort ${cohort}` : ''}
           </span>
           <h1 className="mt-3 max-w-3xl font-display text-3xl font-extrabold tracking-tight text-[#0f1115] sm:text-4xl">
-            {greeting()}, {studentCode}.
+            {greeting()}, {shortName}.
           </h1>
           <p className="mt-2 text-sm text-gray-500">Welcome back, {shortName}.</p>
         </div>
