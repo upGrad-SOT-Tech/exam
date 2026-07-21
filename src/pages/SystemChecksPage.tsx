@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import { logoUrl } from "@/assets/brand";
 import { useNavigate } from "react-router-dom";
 import CheckAttentionPanel from "@/components/system-checks/CheckAttentionPanel";
 import CheckResultsGrid from "@/components/system-checks/CheckResultsGrid";
@@ -49,7 +50,7 @@ export default function SystemChecksPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <img
-              src="/assets/upgradsot_logo_small.png"
+              src={logoUrl}
               alt="upGrad"
               className="h-8"
             />

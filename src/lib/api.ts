@@ -143,6 +143,17 @@ export const authApi = {
       body: JSON.stringify({ email, password, otp }),
     }),
 
+  /**
+   * Redeems the one-time code from an `upgradexam://launch` deep link for a session here, so a
+   * student who clicked their exam in the LMS never signs in twice. Single-use and short-lived —
+   * a failure means the link expired or was already spent, and the student must click again.
+   */
+  ssoExchange: (code: string) =>
+    request<AuthResult & { examId: string | null }>('/api/auth/sso/exchange', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    }),
+
   me: () => request<{ user: AuthUser; role: string }>('/api/auth/me'),
 
   logout: () =>

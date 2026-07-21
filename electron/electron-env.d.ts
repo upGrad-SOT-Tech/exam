@@ -21,34 +21,10 @@ declare namespace NodeJS {
   }
 }
 
+// The preload bridges (`systemChecks`, `proctoring`, `examLauncher`) are declared once in
+// src/vite-env.d.ts against their own `*/types.ts` contracts. They used to be re-declared here as
+// inline shapes, which silently drifted — captureExamScreen existed in the preload and in
+// ProctoringApi but not in the copy, so every call site failed to typecheck.
 interface Window {
   ipcRenderer: import("electron").IpcRenderer;
-  systemChecks: {
-    getDefinitions: () => Promise<
-      import("../src/lib/system-checks/types").CheckDefinition[]
-    >;
-    runAll: (
-      media?: import("../src/lib/system-checks/types").MediaCheckInput,
-    ) => Promise<import("../src/lib/system-checks/types").SystemCheckReport>;
-    isAvailable: () => boolean;
-  };
-  proctoring: {
-    listRunningApps: () => Promise<
-      import("../src/lib/proctoring/types").RunningApp[]
-    >;
-    closeRunningApps: (
-      pids: number[],
-    ) => Promise<import("../src/lib/proctoring/types").CloseAppsResult>;
-    startLockdown: () => Promise<
-      import("../src/lib/proctoring/types").LockdownState
-    >;
-    endLockdown: () => Promise<
-      import("../src/lib/proctoring/types").LockdownState
-    >;
-    onEvent: (
-      listener: (
-        event: import("../src/lib/proctoring/types").ProctorEvent,
-      ) => void,
-    ) => () => void;
-  };
 }

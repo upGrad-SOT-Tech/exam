@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react'
+import { logoUrl, logoWhiteUrl, loginHeroUrl } from '@/assets/brand'
 import { Eye, EyeOff } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { z } from 'zod'
@@ -229,7 +230,7 @@ export default function LoginPage() {
         <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-cyan-400 shadow-[0_0_14px_rgba(34,211,238,0.9)]" />
         <div className="relative z-10 flex h-full flex-col px-8 py-7">
           <img
-            src="/assets/ugsot_white_small.png"
+            src={logoWhiteUrl}
             alt="upGrad School of Technology"
             className="h-auto w-36 object-contain"
             width={144}
@@ -237,7 +238,7 @@ export default function LoginPage() {
           />
           <div className="flex flex-1 items-center justify-center px-4">
             <img
-              src="/assets/login_hero_image.png"
+              src={loginHeroUrl}
               alt="Digital learning platform illustration"
               className="h-auto w-full max-w-[520px] object-contain drop-shadow-[0_24px_80px_rgba(226,35,39,0.25)]"
               width={520}
@@ -256,7 +257,7 @@ export default function LoginPage() {
         <div className="w-full max-w-[550px]">
           <div className="mb-10 lg:hidden">
             <img
-              src="/assets/upgradsot_logo_small.png"
+              src={logoUrl}
               alt="upGrad School of Technology"
               className="h-auto w-44 rounded"
               width={176}

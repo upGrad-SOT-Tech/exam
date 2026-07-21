@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import ChecksGate from '@/components/system-checks/ChecksGate'
 import { useAuth } from '@/context/AuthContext'
+import { useDeepLinkLaunch } from '@/lib/deep-link/useDeepLinkLaunch'
 import ExamPlayerPage from '@/pages/ExamPlayerPage'
 import HomePage from '@/pages/HomePage'
 import LoginPage from '@/pages/LoginPage'
@@ -34,6 +35,10 @@ function Protected({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  // Listens for the LMS handoff (upgradexam://launch) for the whole life of the app, so a student
+  // can click their exam in the LMS whether this app is already open or cold.
+  useDeepLinkLaunch()
+
   return (
     <Routes>
       <Route path="/system-checks" element={<SystemChecksPage />} />

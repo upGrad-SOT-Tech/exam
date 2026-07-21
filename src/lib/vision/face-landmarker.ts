@@ -96,6 +96,15 @@ export type FaceDetectionFrame = {
   raw: FaceLandmarkerResult
 }
 
+/**
+ * A well-formed "nothing detected" result. MediaPipe's FaceLandmarkerResult requires blendshapes
+ * and transformation matrices too, so an empty array for each keeps downstream reads (which all go
+ * through optional chaining) behaving exactly as before without casting a partial object.
+ */
+function emptyFaceResult(): FaceLandmarkerResult {
+  return { faceLandmarks: [], faceBlendshapes: [], facialTransformationMatrixes: [] }
+}
+
 export function detectFaces(
   landmarker: FaceLandmarker,
   video: HTMLVideoElement,
@@ -105,7 +114,7 @@ export function detectFaces(
     return {
       faceCount: 0,
       samples: [],
-      raw: { faceLandmarks: [] } as FaceLandmarkerResult,
+      raw: emptyFaceResult(),
     }
   }
 
@@ -120,7 +129,7 @@ export function detectFaces(
       return {
         faceCount: -1,
         samples: [],
-        raw: { faceLandmarks: [] } as FaceLandmarkerResult,
+        raw: emptyFaceResult(),
       }
     }
   }

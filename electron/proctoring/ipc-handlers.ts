@@ -29,6 +29,10 @@ let displayMediaHandlerInstalled = false
 let permissionHandlerInstalled = false
 
 const execFileAsync = promisify(execFile)
+// Screen-capture permissions to refuse during lockdown. Compared as plain strings: Electron's
+// permission union only names "display-capture", but older builds ask with "desktopCapturer", and
+// a request we don't recognise must still be blocked rather than silently type-checked away.
+const CAPTURE_PERMISSIONS = new Set(["display-capture", "desktopCapturer"])
 const developmentAllowedAppNames = ["cursor", "electron", "electron-vite-project", "node"]
 const prohibitedPatterns = [
   ...REMOTE_DESKTOP_PROCESSES,
@@ -328,7 +332,7 @@ function installCaptureGuards() {
           callback(true)
           return
         }
-        if (permission === "display-capture" || permission === "desktopCapturer") {
+        if (CAPTURE_PERMISSIONS.has(String(permission))) {
           emitEvent("screen_capture_attempted", { source: permission, blocked: true })
           callback(false)
           return

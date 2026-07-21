@@ -3,6 +3,8 @@ import type { MediaCheckInput } from "./system-checks/types";
 import { IPC } from "./system-checks/ipc-channels";
 import { PROCTORING_IPC } from "./proctoring/ipc-channels";
 import type { ProctorEvent } from "./proctoring/types";
+import { DEEP_LINK_IPC } from "./deep-link/ipc-channels";
+import type { DeepLinkPayload } from "./deep-link/types";
 
 contextBridge.exposeInMainWorld("systemChecks", {
   isAvailable: () => true,
@@ -22,6 +24,18 @@ contextBridge.exposeInMainWorld("proctoring", {
       listener(payload);
     ipcRenderer.on(PROCTORING_IPC.EVENT, wrapped);
     return () => ipcRenderer.off(PROCTORING_IPC.EVENT, wrapped);
+  },
+});
+
+// SSO handoff from the LMS: `upgradexam://launch?code=…&examId=…`. The renderer subscribes at
+// startup and trades the code for a session, so the student never signs in twice.
+contextBridge.exposeInMainWorld("examLauncher", {
+  isAvailable: () => true,
+  onDeepLink: (listener: (payload: DeepLinkPayload) => void) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, payload: DeepLinkPayload) =>
+      listener(payload);
+    ipcRenderer.on(DEEP_LINK_IPC.EVENT, wrapped);
+    return () => ipcRenderer.off(DEEP_LINK_IPC.EVENT, wrapped);
   },
 });
 

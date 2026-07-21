@@ -2,6 +2,7 @@
 
 import type { SystemChecksApi } from "@/lib/system-checks/types";
 import type { ProctoringApi } from "@/lib/proctoring/types";
+import type { ExamLauncherApi } from "@/lib/deep-link/types";
 
 interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL: string;
@@ -20,5 +21,6 @@ declare global {
   interface Window {
     systemChecks?: SystemChecksApi;
     proctoring?: ProctoringApi;
+    examLauncher?: ExamLauncherApi;
   }
 }

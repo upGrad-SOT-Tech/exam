@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { logoUrl } from '@/assets/brand'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import EyeFaceCalibration from '@/components/calibration/EyeFaceCalibration'
 import MediaConfirmation from '@/components/media/MediaConfirmation'
@@ -337,7 +338,7 @@ export default function PreExamPage() {
           <div className="min-w-0">
             <div className={`flex items-center gap-3 ${immersiveLayout ? '' : 'flex-col items-start'}`}>
               <img
-                src="/assets/upgradsot_logo_small.png"
+                src={logoUrl}
                 alt="upGrad"
                 className={immersiveLayout ? 'h-6' : 'h-7 sm:h-8'}
               />

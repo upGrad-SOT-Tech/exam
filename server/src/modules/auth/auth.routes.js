@@ -9,6 +9,8 @@ router.post("/send-otp", authController.sendOtp);
 router.post("/login/password", authController.loginPassword);
 router.post("/login/otp", authController.loginOtp);
 router.post("/set-password", authController.setPassword);
+// SSO handoff from the LMS deep link — trades a one-time launch code for a session here.
+router.post("/sso/exchange", authController.ssoExchange);
 router.post("/reset-password", authController.resetPassword);
 router.get("/me", requireAuth, authController.me);
 router.post("/refresh", authController.refresh);

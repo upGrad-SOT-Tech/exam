@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { env } from "../../config/env.js";
 import * as authService from "./auth.service.js";
+import { redeemLaunchCode } from "./sso.service.js";
 
 const emailSchema = z.object({
   email: z.string().trim().email(),
@@ -101,6 +102,26 @@ export async function resetPassword(req, res, next) {
   try {
     const { email, password, otp } = setPasswordSchema.parse(req.body);
     res.json(await authService.resetPassword(email, password, otp));
+  } catch (err) {
+    next(err);
+  }
+}
+
+const ssoExchangeSchema = z.object({
+  code: z.string().trim().min(20).max(200),
+});
+
+/**
+ * Redeems a one-time LMS launch code for a session here — the student clicked their exam in the
+ * LMS and the OS handed us `upgradexam://launch?code=…`, so they never sign in twice.
+ */
+export async function ssoExchange(req, res, next) {
+  try {
+    const { code } = ssoExchangeSchema.parse(req.body);
+    const data = await redeemLaunchCode(code);
+    setRefreshCookie(res, data.refreshToken);
+    const { refreshToken: _, ...payload } = data;
+    res.json(payload);
   } catch (err) {
     next(err);
   }
