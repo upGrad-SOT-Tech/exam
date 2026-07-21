@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { logoUrl } from '@/assets/brand'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import EyeFaceCalibration from '@/components/calibration/EyeFaceCalibration'
 import MediaConfirmation from '@/components/media/MediaConfirmation'
@@ -427,7 +428,7 @@ export default function PreExamPage() {
             <div className="min-w-0">
               {immersiveLayout ? (
                 <div className="flex items-center gap-3">
-                  <img src="/assets/upgradsot_logo_small.png" alt="upGrad" className="h-6" />
+                  <img src={logoUrl} alt="upGrad" className="h-6" />
                   <div className="min-w-0">
                     <h1 className="truncate text-sm font-bold text-[#df2428] sm:text-base">
                       {exam.title}
@@ -437,11 +438,7 @@ export default function PreExamPage() {
                 </div>
               ) : (
                 <>
-                  <img
-                    src="/assets/upgradsot_logo_small.png"
-                    alt="upGrad"
-                    className="h-7 sm:h-8"
-                  />
+                  <img src={logoUrl} alt="upGrad" className="h-7 sm:h-8" />
                   <h1 className="mt-3 truncate text-2xl font-extrabold tracking-tight text-[#df2428] sm:text-[1.75rem]">
                     {exam.title}
                   </h1>

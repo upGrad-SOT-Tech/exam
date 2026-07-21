@@ -112,14 +112,27 @@ async function loadStudentAudience(user) {
 
   const profile = doc?.profileSnapshot || {};
 
-  // Exam targeting expects cohortId/cohortName, but in some setups the student
-  // document doesn't contain it. The enrollment record does.
-  let cohortEnrollment = null;
-  if (email && (!doc?.cohortId || !doc?.cohortName)) {
-    cohortEnrollment = await getLmsDb()
-      .collection("lms_cohort_enrollments")
-      .findOne({ email });
-  }
+  // A student sits in TWO unrelated cohort systems. `candidates.cohortId` is the ENGAGEMENT
+  // (builder) cohort; academic section membership lives in `lms_cohort_enrollments` — and the LMS
+  // scheduler targets the latter. So read enrollments ALWAYS, not only when cohortId is absent:
+  // 219 students carry a builder cohortId that differs from their academic section, and treating
+  // enrollments as a mere fallback made every exam scheduled for that section invisible to them.
+  // Collect every active enrollment too — 14 students sit in more than one section, so a single
+  // findOne would silently pick the wrong one.
+  const enrollments = email
+    ? await getLmsDb()
+        .collection("lms_cohort_enrollments")
+        .find({ email, status: "active" }, { projection: { cohortId: 1, cohortName: 1, campus: 1 } })
+        .toArray()
+    : [];
+  const cohortEnrollment = enrollments[0] || null;
+
+  const cohortIds = [
+    ...new Set(enrollments.map((row) => String(row.cohortId || "").trim()).filter(Boolean)),
+  ];
+  const cohortNames = [
+    ...new Set(enrollments.map((row) => String(row.cohortName || "").trim()).filter(Boolean)),
+  ];
 
   const cohortId = doc?.cohortId || profile?.cohortId || cohortEnrollment?.cohortId || null;
   const cohortName = doc?.cohortName || profile?.cohortName || cohortEnrollment?.cohortName || null;
@@ -128,8 +141,11 @@ async function loadStudentAudience(user) {
     id: doc ? String(doc._id) : user.sub,
     email: doc?.email || user.email,
     campus: doc?.campus || profile?.preferredCampus || cohortEnrollment?.campus || null,
+    // The engagement cohort stays in the match set for older exams targeted that way.
     cohortId: cohortId ? String(cohortId) : null,
     cohortName: cohortName || null,
+    cohortIds,
+    cohortNames,
     programName: profile?.programName || doc?.programName || null,
     batch: doc?.batch || profile?.batch || null,
     batchName: doc?.batchName || profile?.batchName || null,

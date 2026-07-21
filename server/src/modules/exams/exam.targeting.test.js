@@ -72,3 +72,27 @@ describe("studentMatchesTargeting", () => {
     );
   });
 });
+
+// Regression: a student in a BUILDER cohort plus an academic section must still match an exam
+// targeted at that section. 219 real students carry a builder cohortId that differs from their
+// academic cohort; matching only cohortId made those exams invisible to every one of them.
+it("cohort targeting matches any active academic enrollment, not just the builder cohort", () => {
+  const targeting = { mode: "filters", cohortIds: ["section-a"] };
+  const student = { cohortId: "builder-cohort", cohortIds: ["section-a"], cohortNames: [] };
+  assert.equal(studentMatchesTargeting(targeting, student), true);
+
+  const other = { cohortId: "builder-cohort", cohortIds: ["section-b"], cohortNames: [] };
+  assert.equal(studentMatchesTargeting(targeting, other), false);
+});
+
+it("cohort targeting still honours the engagement cohort for older exams", () => {
+  const targeting = { mode: "filters", cohortIds: ["builder-cohort"] };
+  const student = { cohortId: "builder-cohort", cohortIds: ["section-a"], cohortNames: [] };
+  assert.equal(studentMatchesTargeting(targeting, student), true);
+});
+
+it("a student in several sections matches an exam for any one of them", () => {
+  const targeting = { mode: "filters", cohortIds: ["section-c"] };
+  const student = { cohortId: null, cohortIds: ["section-a", "section-c"], cohortNames: [] };
+  assert.equal(studentMatchesTargeting(targeting, student), true);
+});

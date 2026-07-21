@@ -1,15 +1,29 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  // The bundle id is the identity macOS/Windows use to route upgradexam:// links back to this app,
+  // so it has to be a real reverse-DNS id rather than the template placeholder.
+  "appId": "com.upgrad.sot.exam",
   "asar": true,
-  "productName": "YourAppName",
+  "productName": "upGrad Exam",
   "directories": {
     "output": "release/${version}"
   },
   "files": [
     "dist",
     "dist-electron"
+  ],
+  // Custom URL scheme the LMS uses to hand a student off to this app, already signed in:
+  // upgradexam://launch?code=…&examId=…. Must match DEEP_LINK_SCHEME (electron/deep-link) and the
+  // LMS's EXAM_DESKTOP_SCHEME. On macOS this becomes CFBundleURLTypes; on Windows the NSIS
+  // installer writes the registry keys.
+  "protocols": [
+    {
+      "name": "upGrad Exam",
+      "schemes": [
+        "upgradexam"
+      ]
+    }
   ],
   "mac": {
     "target": [

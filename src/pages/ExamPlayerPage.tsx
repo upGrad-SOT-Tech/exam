@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { logoUrl } from '@/assets/brand'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import CodingQuestionPanel from '@/components/exam/CodingQuestionPanel'
 import {
@@ -580,7 +581,7 @@ export default function ExamPlayerPage() {
     return (
       <div className="flex h-screen items-center justify-center bg-[#111318] px-6 text-white">
         <div className="w-full max-w-md text-center">
-          <img src="/assets/upgradsot_logo_small.png" alt="upGrad" className="mx-auto h-9" />
+          <img src={logoUrl} alt="upGrad" className="mx-auto h-9" />
           <h1 className="mt-6 text-xl font-bold">
             {lockdownError ? 'Unable to secure exam' : 'Securing exam environment'}
           </h1>
@@ -596,7 +597,7 @@ export default function ExamPlayerPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8f9fb] px-6">
         <div className="w-full max-w-xl border border-gray-200 bg-white p-6 text-center">
-          <img src="/assets/upgradsot_logo_small.png" alt="upGrad" className="mx-auto h-9" />
+          <img src={logoUrl} alt="upGrad" className="mx-auto h-9" />
           <h1 className="mt-5 text-2xl font-extrabold text-[#df2428]">Exam submitted</h1>
           <p className="mt-2 text-sm text-gray-700">
             {submission?.score == null || submission?.resultsReleased === false

@@ -10,6 +10,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react'
+import { logoUrl } from '@/assets/brand'
 import { useAuth } from '@/context/AuthContext'
 
 const NAV = [
@@ -45,7 +46,7 @@ export default function AppShell() {
   const sideNav = (
     <>
       <div className="px-4 pt-5">
-        <img src="/assets/upgradsot_logo_small.png" alt="upGrad" className="h-8 w-auto" />
+        <img src={logoUrl} alt="upGrad" className="h-8 w-auto" />
         <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">
           Secure exam runtime
         </p>
@@ -124,7 +125,7 @@ export default function AppShell() {
             >
               <Menu className="h-5 w-5" />
             </button>
-            <img src="/assets/upgradsot_logo_small.png" alt="upGrad" className="h-7" />
+            <img src={logoUrl} alt="upGrad" className="h-7" />
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#df2428] text-xs font-bold text-white">
               {initials}
             </div>

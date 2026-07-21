@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { logoUrl } from '@/assets/brand'
 import CheckAttentionPanel from '@/components/system-checks/CheckAttentionPanel'
 import CheckResultsGrid from '@/components/system-checks/CheckResultsGrid'
 import CheckSummaryBar from '@/components/system-checks/CheckSummaryBar'
@@ -30,7 +31,6 @@ export default function SystemChecksPage({ mode = 'gate' }: SystemChecksPageProp
   const hasAutoRun = useRef(false)
   const inApp = mode === 'app'
   const isAuthenticated = status === 'authenticated'
-
   useEffect(() => {
     // Only the pre-login gate should bounce away after a passed session.
     if (inApp) return
@@ -152,7 +152,7 @@ export default function SystemChecksPage({ mode = 'gate' }: SystemChecksPageProp
       <header className="shrink-0 border-b border-gray-200/80 bg-white px-5 py-4 sm:px-8 lg:px-10">
         <div className="mx-auto flex w-full max-w-6xl items-start justify-between gap-4">
           <div className="min-w-0">
-            <img src="/assets/upgradsot_logo_small.png" alt="upGrad" className="h-8" />
+            <img src={logoUrl} alt="upGrad" className="h-8" />
             <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-[#df2428]">
               System readiness
             </h1>

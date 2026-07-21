@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import AppIcon from '@/components/system-checks/AppIcon'
 import type { AttentionItem } from '@/lib/system-checks/messages'
+import type { DetectedApp } from '@/lib/system-checks/detected-app'
 import { closeRunningApps } from '@/lib/proctoring/api'
 
 type CheckAttentionPanelProps = {
@@ -9,10 +10,16 @@ type CheckAttentionPanelProps = {
   onResolved?: () => void
 }
 
+/** Apps a close button has been pressed for, held until the candidate confirms. */
+type PendingClose = { apps: DetectedApp[]; all: boolean }
+
 export default function CheckAttentionPanel({ items, onResolved }: CheckAttentionPanelProps) {
   const [closingPids, setClosingPids] = useState<number[]>([])
   const [closingAll, setClosingAll] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  // Quitting someone's apps can lose unsaved work, so a close button arms this instead of acting:
+  // the candidate sees exactly what will be quit and has to agree before anything is signalled.
+  const [pending, setPending] = useState<PendingClose | null>(null)
 
   const closableApps = useMemo(
     () =>
@@ -28,6 +35,7 @@ export default function CheckAttentionPanel({ items, onResolved }: CheckAttentio
     if (unique.length === 0) return
 
     setActionError(null)
+    setPending(null)
     setClosingPids(unique)
     try {
       const result = await closeRunningApps(unique)
@@ -68,10 +76,9 @@ export default function CheckAttentionPanel({ items, onResolved }: CheckAttentio
           <button
             type="button"
             disabled={closingAll || closingPids.length > 0}
-            onClick={() => {
-              setClosingAll(true)
-              void closePids(closableApps.map((item) => item.app.pid))
-            }}
+            onClick={() =>
+              setPending({ apps: closableApps.map((item) => item.app), all: true })
+            }
             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-800 hover:bg-gray-50 disabled:opacity-50"
           >
             {closingAll ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
@@ -86,6 +93,40 @@ export default function CheckAttentionPanel({ items, onResolved }: CheckAttentio
         {actionError ? (
           <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs text-red-700">
             {actionError}
+          </div>
+        ) : null}
+
+        {pending ? (
+          <div className="rounded-xl border border-gray-300 bg-gray-50 px-4 py-3.5">
+            <p className="text-sm font-semibold text-gray-900">
+              Close {pending.apps.length === 1 ? pending.apps[0].displayName : `${pending.apps.length} apps`}?
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-gray-700">
+              {pending.apps.length === 1
+                ? `We'll ask ${pending.apps[0].displayName} to quit.`
+                : `We'll ask ${pending.apps.map((app) => app.displayName).join(', ')} to quit.`}{' '}
+              Save anything open in {pending.apps.length === 1 ? 'it' : 'them'} first — unsaved work
+              could be lost.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (pending.all) setClosingAll(true)
+                  void closePids(pending.apps.map((app) => app.pid))
+                }}
+                className="rounded-lg bg-[#df2428] px-3 py-2 text-xs font-bold text-white hover:bg-[#c51f23]"
+              >
+                Yes, close {pending.apps.length === 1 ? 'it' : 'them'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPending(null)}
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         ) : null}
 
@@ -123,7 +164,7 @@ export default function CheckAttentionPanel({ items, onResolved }: CheckAttentio
                       <button
                         type="button"
                         disabled={busy || closingAll}
-                        onClick={() => void closePids([item.app.pid])}
+                        onClick={() => setPending({ apps: [item.app], all: false })}
                         className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#df2428] px-3 py-2 text-xs font-bold text-white hover:bg-[#c51f23] disabled:opacity-50"
                       >
                         {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
