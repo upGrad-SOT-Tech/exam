@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { getExam, saveExamAnswer, submitExamAttempt, submitProctorEvents } from '@/lib/exams/api'
+import CodingQuestionPanel from '@/components/exam/CodingQuestionPanel'
+import {
+  getExam,
+  saveCodingAnswer,
+  saveExamAnswer,
+  submitExamAttempt,
+  submitProctorEvents,
+} from '@/lib/exams/api'
 import { createAttemptSocket, emitProctorEvent } from '@/lib/exams/socket'
 import type { Exam, ExamAnswerMap, ExamSubmission } from '@/lib/exams/types'
 import { endLockdown, startLockdown, subscribeProctorEvents } from '@/lib/proctoring/api'
@@ -101,7 +108,23 @@ export default function ExamPlayerPage() {
   examRef.current = exam
 
   const currentQuestion = exam?.questions[currentIndex]
-  const answeredCount = Object.keys(answers).length
+  const isQuestionAnswered = (question: { id: string; type?: string; starterCode?: string }) => {
+    const value = answers[question.id]
+    if (question.type === 'CODING') {
+      const code = String(value || '').trim()
+      const starter = String(question.starterCode || '').trim()
+      return code.length > 0 && code !== starter
+    }
+    return typeof value === 'number'
+  }
+
+  const answeredCount =
+    exam?.questions.filter((question) => isQuestionAnswered(question)).length ?? 0
+
+  const codeDraft =
+    currentQuestion?.type === 'CODING'
+      ? String(answers[currentQuestion.id] ?? currentQuestion.starterCode ?? '')
+      : ''
 
   /** System alerts stay briefly; video face alerts use liveVideoAlert and clear when face returns. */
   const recentSystemAlert = events.find((event) => {
@@ -167,8 +190,36 @@ export default function ExamPlayerPage() {
     [sendEvent],
   )
 
+  const codeSaveTimerRef = useRef<number | null>(null)
+  const queueCodingSave = useCallback(
+    (questionId: string, code: string, language?: string) => {
+      if (!attemptId) return
+      if (codeSaveTimerRef.current) window.clearTimeout(codeSaveTimerRef.current)
+      codeSaveTimerRef.current = window.setTimeout(() => {
+        void saveCodingAnswer(attemptId, questionId, code, language)
+      }, 450)
+    },
+    [attemptId],
+  )
+
   const submitExam = useCallback(async () => {
     if (!attemptId || submitted || submittingRef.current) return
+
+    if (codeSaveTimerRef.current) {
+      window.clearTimeout(codeSaveTimerRef.current)
+      codeSaveTimerRef.current = null
+    }
+    const liveExam = examRef.current
+    if (liveExam) {
+      await Promise.all(
+        liveExam.questions
+          .filter((question) => question.type === 'CODING')
+          .map((question) => {
+            const code = String(answers[question.id] ?? question.starterCode ?? '')
+            return saveCodingAnswer(attemptId, question.id, code, question.language)
+          }),
+      )
+    }
 
     submittingRef.current = true
     setSubmitting(true)
@@ -183,7 +234,7 @@ export default function ExamPlayerPage() {
       setSubmitting(false)
       setSubmitError(error instanceof Error ? error.message : 'Unable to submit exam')
     }
-  }, [attemptId, submitted])
+  }, [answers, attemptId, submitted])
 
   useEffect(() => {
     if (!examId) return
@@ -192,6 +243,15 @@ export default function ExamPlayerPage() {
       if (cancelled) return
       setExam(item)
       setRemainingSeconds(item.durationSeconds)
+      setAnswers((current) => {
+        const next = { ...current }
+        for (const question of item.questions) {
+          if (question.type === 'CODING' && next[question.id] == null) {
+            next[question.id] = question.starterCode || ''
+          }
+        }
+        return next
+      })
     })
     return () => {
       cancelled = true
@@ -539,7 +599,9 @@ export default function ExamPlayerPage() {
           <img src="/assets/upgradsot_logo_small.png" alt="upGrad" className="mx-auto h-9" />
           <h1 className="mt-5 text-2xl font-extrabold text-[#df2428]">Exam submitted</h1>
           <p className="mt-2 text-sm text-gray-700">
-            Score: {submission?.score ?? 0}/{submission?.totalMarks ?? exam.totalMarks}
+            {submission?.score == null || submission?.resultsReleased === false
+              ? 'Submitted successfully. Your score will appear after the admin releases results.'
+              : `Score: ${submission.score}/${submission.totalMarks ?? exam.totalMarks}`}
           </p>
           <p className="mt-1 text-xs text-gray-500">Proctoring events captured: {events.length}</p>
           <button
@@ -615,21 +677,26 @@ export default function ExamPlayerPage() {
           <div className="grid grid-cols-5 gap-2">
             {exam.questions.map((question, index) => {
               const active = index === currentIndex
-              const answered = answers[question.id] !== undefined
+              const answered = isQuestionAnswered(question)
+              const isCoding = question.type === 'CODING'
               return (
                 <button
                   key={question.id}
                   type="button"
                   onClick={() => setCurrentIndex(index)}
-                  className={`h-9 rounded-md border text-xs font-semibold ${
+                  className={`relative h-9 rounded-md border text-xs font-semibold ${
                     active
                       ? 'border-[#df2428] bg-red-50 text-[#df2428]'
                       : answered
                         ? 'border-green-200 bg-green-50 text-green-700'
                         : 'border-gray-200 bg-white text-gray-700'
                   }`}
+                  title={isCoding ? 'Coding question' : 'MCQ'}
                 >
                   {index + 1}
+                  {isCoding ? (
+                    <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[#111318]" />
+                  ) : null}
                 </button>
               )
             })}
@@ -637,58 +704,70 @@ export default function ExamPlayerPage() {
         </aside>
 
         <section className="min-h-0 overflow-y-auto p-6">
-          <div className="border border-gray-200 bg-white p-6">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Question {currentIndex + 1} of {exam.questions.length}
-            </p>
-            <h2 className="mt-3 text-xl font-bold leading-relaxed text-gray-900">
-              {currentQuestion.text}
-            </h2>
-            <div className="mt-6 space-y-3">
-              {currentQuestion.options.map((option, optionIndex) => {
-                const selected = answers[currentQuestion.id] === optionIndex
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => {
-                      setAnswers((items) => ({ ...items, [currentQuestion.id]: optionIndex }))
-                      if (attemptId) void saveExamAnswer(attemptId, currentQuestion.id, optionIndex)
-                    }}
-                    className={`flex w-full items-center gap-3 border px-4 py-3 text-left text-sm ${
-                      selected
-                        ? 'border-[#df2428] bg-red-50 text-[#df2428]'
-                        : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-50'
-                    }`}
-                  >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs font-bold">
-                      {String.fromCharCode(65 + optionIndex)}
-                    </span>
-                    {option}
-                  </button>
-                )
-              })}
+          {currentQuestion.type === 'CODING' ? (
+            <CodingQuestionPanel
+              question={currentQuestion}
+              value={codeDraft}
+              onChange={(code) => {
+                setAnswers((items) => ({ ...items, [currentQuestion.id]: code }))
+                queueCodingSave(currentQuestion.id, code, currentQuestion.language)
+              }}
+            />
+          ) : (
+            <div className="border border-gray-200 bg-white p-6">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Question {currentIndex + 1} of {exam.questions.length} · MCQ · {currentQuestion.marks}{' '}
+                marks
+              </p>
+              <h2 className="mt-3 text-xl font-bold leading-relaxed text-gray-900">
+                {currentQuestion.text}
+              </h2>
+              <div className="mt-6 space-y-3">
+                {currentQuestion.options.map((option, optionIndex) => {
+                  const selected = answers[currentQuestion.id] === optionIndex
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => {
+                        setAnswers((items) => ({ ...items, [currentQuestion.id]: optionIndex }))
+                        if (attemptId) void saveExamAnswer(attemptId, currentQuestion.id, optionIndex)
+                      }}
+                      className={`flex w-full items-center gap-3 border px-4 py-3 text-left text-sm ${
+                        selected
+                          ? 'border-[#df2428] bg-red-50 text-[#df2428]'
+                          : 'border-gray-200 bg-white text-gray-800 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs font-bold">
+                        {String.fromCharCode(65 + optionIndex)}
+                      </span>
+                      {option}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-            <div className="mt-6 flex justify-between">
-              <button
-                type="button"
-                disabled={currentIndex === 0}
-                onClick={() => setCurrentIndex((index) => Math.max(index - 1, 0))}
-                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 disabled:opacity-40"
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                disabled={currentIndex === exam.questions.length - 1}
-                onClick={() =>
-                  setCurrentIndex((index) => Math.min(index + 1, exam.questions.length - 1))
-                }
-                className="rounded-md bg-[#df2428] px-4 py-2 text-sm font-bold text-white disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
+          )}
+          <div className="mt-6 flex justify-between">
+            <button
+              type="button"
+              disabled={currentIndex === 0}
+              onClick={() => setCurrentIndex((index) => Math.max(index - 1, 0))}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              disabled={currentIndex === exam.questions.length - 1}
+              onClick={() =>
+                setCurrentIndex((index) => Math.min(index + 1, exam.questions.length - 1))
+              }
+              className="rounded-md bg-[#df2428] px-4 py-2 text-sm font-bold text-white disabled:opacity-40"
+            >
+              Next
+            </button>
           </div>
         </section>
 

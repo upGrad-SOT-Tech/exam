@@ -51,6 +51,17 @@ export async function seedDefaultExam(examDb) {
     availableFrom: new Date("2026-07-10T00:00:00.000Z"),
     availableUntil: new Date("2026-12-31T23:59:59.000Z"),
     questions,
+    targeting: {
+      mode: "all",
+      campuses: [],
+      cohortIds: [],
+      programs: [],
+      batches: [],
+      studentIds: [],
+      studentEmails: [],
+    },
+    resultsReleased: true,
+    resultsReleasedAt: new Date(),
     settings: {
       shuffleQuestions: false,
       shuffleOptions: false,

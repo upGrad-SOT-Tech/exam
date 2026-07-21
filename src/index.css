@@ -10,11 +10,13 @@ body,
 
 body {
   margin: 0;
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  background: #f6f4f2;
+  color: #0f1115;
 }
 
-
+/* Exam lockdown: no text selection / drag leak of question content */
 html.exam-lockdown,
 html.exam-lockdown body,
 html.exam-lockdown #root,
@@ -28,4 +30,13 @@ html.exam-lockdown input,
 html.exam-lockdown textarea {
   -webkit-user-select: text !important;
   user-select: text !important;
+}
+
+@layer utilities {
+  .dashboard-grid-bg {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
 }

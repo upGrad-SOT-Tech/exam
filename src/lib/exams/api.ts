@@ -1,9 +1,26 @@
 import { request } from "@/lib/api"
-import type { Exam, ExamAttempt, ExamSubmission, ExamSummary } from "./types"
+import type {
+  DashboardSummary,
+  Exam,
+  ExamAttempt,
+  ExamHistoryItem,
+  ExamSubmission,
+  ExamSummary,
+} from "./types"
 
 export async function listAvailableExams(): Promise<ExamSummary[]> {
   const data = await request<{ exams: ExamSummary[] }>("/api/exams")
   return data.exams
+}
+
+export async function listExamHistory(): Promise<ExamHistoryItem[]> {
+  const data = await request<{ history: ExamHistoryItem[] }>("/api/exams/attempts/history")
+  return data.history
+}
+
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  const data = await request<{ summary: DashboardSummary }>("/api/exams/dashboard/summary")
+  return data.summary
 }
 
 export async function getExam(examId: string): Promise<Exam> {
@@ -41,6 +58,18 @@ export async function saveExamAnswer(
   await request(`/api/exams/attempts/${attemptId}/answers`, {
     method: "PATCH",
     body: JSON.stringify({ questionId, answerIndex }),
+  })
+}
+
+export async function saveCodingAnswer(
+  attemptId: string,
+  questionId: string,
+  codeAnswer: string,
+  language?: string,
+): Promise<void> {
+  await request(`/api/exams/attempts/${attemptId}/answers`, {
+    method: "PATCH",
+    body: JSON.stringify({ questionId, codeAnswer, language }),
   })
 }
 
