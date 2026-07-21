@@ -48,7 +48,7 @@ function preExamEvents() {
   return getExamDb().collection("pre_exam_events");
 }
 
-function publicExam(exam, now = new Date()) {
+function publicExam(exam, now = new Date(), attempt = null) {
   const availableFrom = new Date(exam.availableFrom);
   const availableUntil = new Date(exam.availableUntil);
   let availability = "closed";
@@ -69,7 +69,32 @@ function publicExam(exam, now = new Date()) {
     questionCount: exam.questions.length,
     codingCount: (exam.questions || []).filter((q) => q.type === "CODING").length,
     resultsReleased: Boolean(exam.resultsReleased),
+    attemptStatus: attempt?.status === "submitted" || attempt?.status === "in_progress" ? attempt.status : null,
+    attemptId: attempt?._id ? String(attempt._id) : null,
   };
+}
+
+async function loadAttemptsByExamId(userId, examObjectIds) {
+  if (!userId || examObjectIds.length === 0) return new Map();
+
+  const items = await attempts()
+    .find({
+      userId,
+      examId: { $in: examObjectIds },
+      status: { $in: ["in_progress", "submitted"] },
+    })
+    .toArray();
+
+  const byExamId = new Map();
+  for (const item of items) {
+    const key = String(item.examId);
+    const existing = byExamId.get(key);
+    // Prefer submitted if both somehow exist.
+    if (!existing || item.status === "submitted") {
+      byExamId.set(key, item);
+    }
+  }
+  return byExamId;
 }
 
 async function loadStudentAudience(user) {
@@ -185,7 +210,15 @@ router.get("/", async (req, res, next) => {
   try {
     const now = new Date();
     const items = await listVisibleExams(req.user);
-    res.json({ exams: items.map((exam) => publicExam(exam, now)) });
+    const attemptByExamId = await loadAttemptsByExamId(
+      req.user.sub,
+      items.map((exam) => exam._id),
+    );
+    res.json({
+      exams: items.map((exam) =>
+        publicExam(exam, now, attemptByExamId.get(String(exam._id)) ?? null),
+      ),
+    });
   } catch (err) {
     next(err);
   }
@@ -269,11 +302,26 @@ router.get("/dashboard/summary", async (req, res, next) => {
     const now = new Date();
     const weekMs = 7 * 24 * 60 * 60 * 1000;
 
-    const [mySubmitted, allSubmitted, publishedExams] = await Promise.all([
+    const [mySubmitted, allSubmitted, publishedExams, myAttempts] = await Promise.all([
       attempts().find({ userId, status: "submitted" }).sort({ submittedAt: 1 }).toArray(),
       attempts().find({ status: "submitted" }).project({ userId: 1, score: 1, totalMarks: 1 }).toArray(),
       listVisibleExams(req.user),
+      attempts()
+        .find({
+          userId,
+          status: { $in: ["in_progress", "submitted"] },
+        })
+        .toArray(),
     ]);
+
+    const attemptByExamId = new Map();
+    for (const item of myAttempts) {
+      const key = String(item.examId);
+      const existing = attemptByExamId.get(key);
+      if (!existing || item.status === "submitted") {
+        attemptByExamId.set(key, item);
+      }
+    }
 
     const examDocsById = new Map(publishedExams.map((exam) => [String(exam._id), exam]));
     const releasedSubmitted = mySubmitted.filter((item) =>
@@ -397,10 +445,15 @@ router.get("/dashboard/summary", async (req, res, next) => {
       };
     });
 
-    const examAvailability = publishedExams.map((exam) => publicExam(exam, now));
+    const examAvailability = publishedExams.map((exam) =>
+      publicExam(exam, now, attemptByExamId.get(String(exam._id)) ?? null),
+    );
+    const startable = examAvailability.filter(
+      (item) => item.availability === "available" && item.attemptStatus !== "submitted",
+    );
     const counts = {
       all: examAvailability.length,
-      available: examAvailability.filter((item) => item.availability === "available").length,
+      available: startable.length,
       upcoming: examAvailability.filter((item) => item.availability === "upcoming").length,
       completed: mySubmitted.length,
     };
@@ -439,7 +492,21 @@ router.get("/dashboard/summary", async (req, res, next) => {
 router.get("/:examId", async (req, res, next) => {
   try {
     const exam = await getPublishedExamForStudent(req.params.examId, req.user);
-    res.json({ exam: studentExam(exam) });
+    const attempt = await attempts().findOne({
+      examId: exam._id,
+      userId: req.user.sub,
+      status: { $in: ["in_progress", "submitted"] },
+    });
+    res.json({
+      exam: {
+        ...studentExam(exam),
+        attemptStatus:
+          attempt?.status === "submitted" || attempt?.status === "in_progress"
+            ? attempt.status
+            : null,
+        attemptId: attempt?._id ? String(attempt._id) : null,
+      },
+    });
   } catch (err) {
     next(err);
   }
@@ -455,8 +522,21 @@ router.post("/:examId/attempts", async (req, res, next) => {
       status: { $in: ["in_progress", "submitted"] },
     });
 
-    if (existing) {
-      throw new AppError("Attempt already exists for this exam", 409, "ATTEMPT_ALREADY_EXISTS");
+    if (existing?.status === "submitted") {
+      throw new AppError("You have already submitted this exam", 409, "ATTEMPT_ALREADY_SUBMITTED");
+    }
+
+    if (existing?.status === "in_progress") {
+      res.json({
+        attempt: {
+          id: String(existing._id),
+          examId: String(exam._id),
+          status: "in_progress",
+          startedAt: existing.startedAt,
+          durationSeconds: existing.durationSeconds ?? exam.durationSeconds,
+        },
+      });
+      return;
     }
 
     const result = await attempts().insertOne({

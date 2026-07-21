@@ -10,6 +10,8 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+# Packaged app + installers from `npm run build` (electron-builder) — hundreds of MB per build.
+release
 *.local
 .env
 server/.env

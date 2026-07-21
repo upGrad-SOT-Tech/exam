@@ -1,7 +1,7 @@
 import { clipboard as Ks, screen as Zn, app as ce, ipcMain as Dt, session as js, powerMonitor as Bn, shell as ho, globalShortcut as mr, BrowserWindow as gr, Menu as xo } from "electron";
 import { fileURLToPath as yo } from "node:url";
-import $e from "node:path";
-import Ke from "os";
+import He from "node:path";
+import je from "os";
 import Ne from "fs";
 import ps from "path";
 import ee from "child_process";
@@ -450,7 +450,7 @@ const Qo = "5.31.15", Zo = {
   version: Qo
 };
 var D = {};
-const nt = Ke, He = Ne, ea = ps, li = ee.spawn, ta = ee.exec, Mn = ee.execSync, na = So, kt = process.platform, ui = kt === "linux" || kt === "android", Sr = kt === "darwin", ds = kt === "win32", Cr = kt === "freebsd", wr = kt === "openbsd", Lr = kt === "netbsd";
+const nt = je, Xe = Ne, ea = ps, li = ee.spawn, ta = ee.exec, Mn = ee.execSync, na = So, kt = process.platform, ui = kt === "linux" || kt === "android", Sr = kt === "darwin", ds = kt === "win32", Cr = kt === "freebsd", wr = kt === "openbsd", Lr = kt === "netbsd";
 let Es = 0, Be = "", Ze = null, Ge = null;
 const Ir = process.env.WINDIR || "C:\\Windows";
 let de, zt = "";
@@ -597,7 +597,7 @@ function ma(t, n, e) {
 function ga() {
   if (es = "powershell.exe", ds) {
     const t = `${Ir}\\system32\\WindowsPowerShell\\v1.0\\powershell.exe`;
-    He.existsSync(t) && (es = t);
+    Xe.existsSync(t) && (es = t);
   }
 }
 function ha() {
@@ -771,7 +771,7 @@ function Ia(t) {
     t = Ge;
   else if (t === void 0)
     try {
-      t = He.readFileSync("/proc/cpuinfo", { encoding: "utf8" }).toString().split(`
+      t = Xe.readFileSync("/proc/cpuinfo", { encoding: "utf8" }).toString().split(`
 `), Ge = t;
     } catch {
       return !1;
@@ -782,7 +782,7 @@ function Ia(t) {
 function _a() {
   let t = [];
   try {
-    t = He.readFileSync("/etc/os-release", { encoding: "utf8" }).toString().split(`
+    t = Xe.readFileSync("/etc/os-release", { encoding: "utf8" }).toString().split(`
 `);
   } catch {
     return !1;
@@ -798,7 +798,7 @@ function Oa(t, n, e) {
   });
 }
 function Pa() {
-  const t = He.existsSync("/Library/Developer/CommandLineTools/usr/bin/"), n = He.existsSync("/Applications/Xcode.app/Contents/Developer/Tools"), e = He.existsSync("/Library/Developer/Xcode/");
+  const t = Xe.existsSync("/Library/Developer/CommandLineTools/usr/bin/"), n = Xe.existsSync("/Applications/Xcode.app/Contents/Developer/Tools"), e = Xe.existsSync("/Library/Developer/Xcode/");
   return t || e || n;
 }
 function va() {
@@ -881,7 +881,7 @@ function Ta(t) {
   return ("00000000" + parseInt(t, 16).toString(2)).substr(-8);
 }
 function Da(t) {
-  const n = He.lstatSync, e = He.readdirSync, s = ea.join;
+  const n = Xe.lstatSync, e = Xe.readdirSync, s = ea.join;
   function r(l) {
     return n(l).isDirectory();
   }
@@ -901,7 +901,7 @@ function Da(t) {
       return [];
     }
   }
-  return He.existsSync(t) ? c(t) : [];
+  return Xe.existsSync(t) ? c(t) : [];
 }
 function Tr(t) {
   Ge === null ? Ge = t : t === void 0 && (t = Ge);
@@ -1086,7 +1086,7 @@ function ba(t) {
     t = Ge;
   else
     try {
-      t = He.readFileSync("/proc/cpuinfo", { encoding: "utf8" }).toString().split(`
+      t = Xe.readFileSync("/proc/cpuinfo", { encoding: "utf8" }).toString().split(`
 `), Ge = t;
     } catch {
       return !1;
@@ -2549,7 +2549,7 @@ D.cleanString = Ua;
 D.grep = $a;
 D.getPowershell = ga;
 var bn = {}, Ft = {};
-const Ve = Ke, Pe = Ne, N = D, B = ee.exec, hn = ee.execSync, Xa = ee.execFile, We = process.platform, nn = We === "linux" || We === "android", ve = We === "darwin", Me = We === "win32", fi = We === "freebsd", mi = We === "openbsd", gi = We === "netbsd", Ka = We === "sunos";
+const Ve = je, Pe = Ne, N = D, B = ee.exec, hn = ee.execSync, Xa = ee.execFile, We = process.platform, nn = We === "linux" || We === "android", ve = We === "darwin", Me = We === "win32", fi = We === "freebsd", mi = We === "openbsd", gi = We === "netbsd", Ka = We === "sunos";
 function ja() {
   const t = (/* @__PURE__ */ new Date()).toString().split(" ");
   let n = "";
@@ -3285,7 +3285,7 @@ echo -n "hardware: "; cat /sys/class/dmi/id/product_uuid 2> /dev/null; echo;`, (
   });
 }
 Ft.uuid = Dr;
-const bs = Ne, Vt = Ke, L = D, { uuid: wp } = Ft, tn = ee.exec, bt = ee.execSync, Gn = L.promisify(ee.exec), ot = process.platform, gs = ot === "linux" || ot === "android", hs = ot === "darwin", xs = ot === "win32", Qt = ot === "freebsd", Zt = ot === "openbsd", en = ot === "netbsd", ys = ot === "sunos";
+const bs = Ne, Vt = je, L = D, { uuid: wp } = Ft, tn = ee.exec, bt = ee.execSync, Gn = L.promisify(ee.exec), ot = process.platform, gs = ot === "linux" || ot === "android", hs = ot === "darwin", xs = ot === "win32", Qt = ot === "freebsd", Zt = ot === "openbsd", en = ot === "netbsd", ys = ot === "sunos";
 function ic(t) {
   return new Promise((n) => {
     process.nextTick(() => {
@@ -3669,7 +3669,7 @@ function ac(t) {
 }
 bn.chassis = ac;
 var _t = {};
-const Re = Ke, Se = ee.exec, Ss = ee.execSync, ns = Ne, P = D, at = process.platform, sn = at === "linux" || at === "android", Cs = at === "darwin", ws = at === "win32", Ls = at === "freebsd", Is = at === "openbsd", _s = at === "netbsd", Os = at === "sunos";
+const Re = je, Se = ee.exec, Ss = ee.execSync, ns = Ne, P = D, at = process.platform, sn = at === "linux" || at === "android", Cs = at === "darwin", ws = at === "win32", Ls = at === "freebsd", Is = at === "openbsd", _s = at === "netbsd", Os = at === "sunos";
 let Jt = 0, Y = {
   user: 0,
   nice: 0,
@@ -5087,7 +5087,7 @@ function hc(t) {
 }
 _t.fullLoad = hc;
 var hi = {};
-const ze = Ke, xn = ee.exec, Yn = ee.execSync, M = D, xc = Ne;
+const ze = je, xn = ee.exec, Yn = ee.execSync, M = D, xc = Ne;
 let ct = process.platform;
 const kr = ct === "linux" || ct === "android", Fr = ct === "darwin", Rr = ct === "win32", Gr = ct === "freebsd", Wr = ct === "openbsd", zr = ct === "netbsd", Ur = ct === "sunos", ki = {
   "00CE": "Samsung Electronics Inc",
@@ -7128,7 +7128,7 @@ ${w}|"; diskutil info /dev/${w} | grep SMART;`, o += `${o ? 'printf ",";' : ""}s
 }
 Rt.diskLayout = Zc;
 var Gt = {};
-const ss = Ke, _e = ee.exec, Oe = ee.execSync, Vn = ee.execFileSync, el = Ne.readFileSync, tl = Ne, T = D, dt = process.platform, qe = dt === "linux" || dt === "android", Ye = dt === "darwin", Nn = dt === "win32", ft = dt === "freebsd", mt = dt === "openbsd", gt = dt === "netbsd", Ki = dt === "sunos", Q = {};
+const ss = je, _e = ee.exec, Oe = ee.execSync, Vn = ee.execFileSync, el = Ne.readFileSync, tl = Ne, T = D, dt = process.platform, qe = dt === "linux" || dt === "android", Ye = dt === "darwin", Nn = dt === "win32", ft = dt === "freebsd", mt = dt === "openbsd", gt = dt === "netbsd", Ki = dt === "sunos", Q = {};
 let ji = "", Ht = {}, qi = [], Xt = [], Kt = {}, Tt;
 function Bt() {
   let t = "", n = "";
@@ -8088,7 +8088,7 @@ function Il(t) {
 }
 Gt.networkGatewayDefault = Il;
 var Ps = {};
-const gn = Ke, yi = ee.exec, ht = ee.execSync, E = D;
+const gn = je, yi = ee.exec, ht = ee.execSync, E = D;
 let is = process.platform;
 const Si = is === "linux" || is === "android", Ci = is === "darwin", wi = is === "win32";
 function Li(t) {
@@ -8578,9 +8578,9 @@ function Tl(t) {
 }
 Ps.wifiInterfaces = Tl;
 var vs = {};
-const os = Ke, Dl = Ne, bl = ps, Cn = ee.exec, Gs = ee.execSync, X = D;
+const os = je, Dl = Ne, bl = ps, Cn = ee.exec, Gs = ee.execSync, X = D;
 let xt = process.platform;
-const Ue = xt === "linux" || xt === "android", Nt = xt === "darwin", Ii = xt === "win32", An = xt === "freebsd", En = xt === "openbsd", Tn = xt === "netbsd", Xn = xt === "sunos", ue = {
+const $e = xt === "linux" || xt === "android", Nt = xt === "darwin", Ii = xt === "win32", An = xt === "freebsd", En = xt === "openbsd", Tn = xt === "netbsd", Xn = xt === "sunos", ue = {
   all: 0,
   all_utime: 0,
   all_stime: 0,
@@ -8644,8 +8644,8 @@ function Bl(t, n) {
           r[l] !== void 0 && (s = s + r[l]);
         s = s.trim().toLowerCase().replace(/, /g, "|").replace(/,+/g, "|"), s === "" && (s = "*"), X.isPrototypePolluted() && s !== "*" && (s = "------");
         let o = s.split("|"), a = [], c = [];
-        if (Ue || An || En || Tn || Nt) {
-          if ((Ue || An || En || Tn) && s === "*")
+        if ($e || An || En || Tn || Nt) {
+          if (($e || An || En || Tn) && s === "*")
             try {
               const u = Gs("systemctl --all --type=service --no-legend 2> /dev/null", X.execOptsLinux).toString().split(`
 `);
@@ -8716,7 +8716,7 @@ function Bl(t, n) {
                     }, 0).toFixed(2)
                   )
                 });
-              }), Ue) {
+              }), $e) {
                 let p = 'cat /proc/stat | grep "cpu "';
                 for (let f in a)
                   for (let m in a[f].pids)
@@ -8936,7 +8936,7 @@ function kl(t) {
     return {
       pid: u,
       parentPid: d,
-      name: Ue ? e(v) : v,
+      name: $e ? e(v) : v,
       cpu: p,
       cpuu: 0,
       cpus: 0,
@@ -9020,12 +9020,12 @@ function kl(t) {
         list: []
       }, c = "";
       if (ue.ms && Date.now() - ue.ms >= 500 || ue.ms === 0)
-        if (Ue || An || En || Tn || Nt || Xn) {
-          Ue && (c = "export LC_ALL=C; ps -axo pid:11,ppid:11,pcpu:6,pmem:6,pri:5,vsz:11,rss:11,ni:5,etime:30,state:5,tty:15,user:20,command; unset LC_ALL"), (An || En || Tn) && (c = "export LC_ALL=C; ps -axo pid,ppid,pcpu,pmem,pri,vsz,rss,ni,etime,state,tty,user,command; unset LC_ALL"), Nt && (c = "ps -axo pid,ppid,pcpu,pmem,pri,vsz=temp_title_1,rss=temp_title_2,nice,etime=temp_title_3,state,tty,user,command -r"), Xn && (c = "ps -Ao pid,ppid,pcpu,pmem,pri,vsz,rss,nice,stime,s,tty,user,comm");
+        if ($e || An || En || Tn || Nt || Xn) {
+          $e && (c = "export LC_ALL=C; ps -axo pid:11,ppid:11,pcpu:6,pmem:6,pri:5,vsz:11,rss:11,ni:5,etime:30,state:5,tty:15,user:20,command; unset LC_ALL"), (An || En || Tn) && (c = "export LC_ALL=C; ps -axo pid,ppid,pcpu,pmem,pri,vsz,rss,ni,etime,state,tty,user,command; unset LC_ALL"), Nt && (c = "ps -axo pid,ppid,pcpu,pmem,pri,vsz=temp_title_1,rss=temp_title_2,nice,etime=temp_title_3,state,tty,user,command -r"), Xn && (c = "ps -Ao pid,ppid,pcpu,pmem,pri,vsz,rss,nice,stime,s,tty,user,comm");
           try {
             Cn(c, { maxBuffer: 1024 * 102400 }, (l, u) => {
               !l && u.toString().trim() ? (a.list = r(u.toString().split(`
-`)).slice(), a.all = a.list.length, a.running = a.list.filter((d) => d.state === "running").length, a.blocked = a.list.filter((d) => d.state === "blocked").length, a.sleeping = a.list.filter((d) => d.state === "sleeping").length, Ue ? (c = 'cat /proc/stat | grep "cpu "', a.list.forEach((d) => {
+`)).slice(), a.all = a.list.length, a.running = a.list.filter((d) => d.state === "running").length, a.blocked = a.list.filter((d) => d.state === "blocked").length, a.sleeping = a.list.filter((d) => d.state === "sleeping").length, $e ? (c = 'cat /proc/stat | grep "cpu "', a.list.forEach((d) => {
                 c += ";cat /proc/" + d.pid + "/stat";
               }), Cn(c, { maxBuffer: 1024 * 102400 }, (d, p) => {
                 let f = p.toString().split(`
@@ -9199,7 +9199,7 @@ function Fl(t, n) {
           } catch {
             n && n(a), e(a);
           }
-        if (Nt || Ue || An || En || Tn) {
+        if (Nt || $e || An || En || Tn) {
           const l = ["-axo", "pid,ppid,pcpu,pmem,comm"];
           X.execSafe("ps", l).then((u) => {
             if (u) {
@@ -9217,7 +9217,7 @@ function Fl(t, n) {
               if (p.shift(), p.forEach((f) => {
                 const m = f.trim().replace(/ +/g, " ").split(" ");
                 if (m.length > 4) {
-                  const h = m[4].indexOf("/") >= 0 ? m[4].substring(0, m[4].indexOf("/")) : m[4], y = Ue ? h : m[4].substring(m[4].lastIndexOf("/") + 1);
+                  const h = m[4].indexOf("/") >= 0 ? m[4].substring(0, m[4].indexOf("/")) : m[4], y = $e ? h : m[4].substring(m[4].lastIndexOf("/") + 1);
                   d.push({
                     name: y,
                     pid: parseInt(m[0]) || 0,
@@ -9247,7 +9247,7 @@ function Fl(t, n) {
                   cpu: 0,
                   mem: 0
                 });
-              }), Ue) {
+              }), $e) {
                 a.forEach((m) => {
                   m.cpu = 0;
                 });
@@ -9624,7 +9624,7 @@ function t0(t, n) {
 }
 Pi.inetLatency = t0;
 var Ot = {};
-const et = Lo, n0 = Ke.type() === "Windows_NT", tt = n0 ? "//./pipe/docker_engine" : "/var/run/docker.sock";
+const et = Lo, n0 = je.type() === "Windows_NT", tt = n0 ? "//./pipe/docker_engine" : "/var/run/docker.sock";
 let s0 = class {
   getInfo(n) {
     try {
@@ -10202,7 +10202,7 @@ function h0(t) {
 }
 Ot.dockerAll = h0;
 var to = {};
-const Us = Ke, x0 = ee.exec, J = D;
+const Us = je, x0 = ee.exec, J = D;
 function y0(t) {
   let n = [];
   return new Promise((e) => {
@@ -11960,16 +11960,16 @@ ro.bluetoothDevices = Iu;
   }
   t.version = ie, t.system = s.system, t.bios = s.bios, t.baseboard = s.baseboard, t.chassis = s.chassis, t.time = r.time, t.osInfo = r.osInfo, t.versions = r.versions, t.shell = r.shell, t.uuid = r.uuid, t.cpu = i.cpu, t.cpuFlags = i.cpuFlags, t.cpuCache = i.cpuCache, t.cpuCurrentSpeed = i.cpuCurrentSpeed, t.cpuTemperature = i.cpuTemperature, t.currentLoad = i.currentLoad, t.fullLoad = i.fullLoad, t.mem = o.mem, t.memLayout = o.memLayout, t.battery = a, t.graphics = c.graphics, t.fsSize = l.fsSize, t.fsOpenFiles = l.fsOpenFiles, t.blockDevices = l.blockDevices, t.fsStats = l.fsStats, t.disksIO = l.disksIO, t.diskLayout = l.diskLayout, t.networkInterfaceDefault = u.networkInterfaceDefault, t.networkGatewayDefault = u.networkGatewayDefault, t.networkInterfaces = u.networkInterfaces, t.networkStats = u.networkStats, t.networkConnections = u.networkConnections, t.wifiNetworks = d.wifiNetworks, t.wifiInterfaces = d.wifiInterfaces, t.wifiConnections = d.wifiConnections, t.services = p.services, t.processes = p.processes, t.processLoad = p.processLoad, t.users = f.users, t.inetChecksite = m.inetChecksite, t.inetLatency = m.inetLatency, t.dockerInfo = h.dockerInfo, t.dockerImages = h.dockerImages, t.dockerContainers = h.dockerContainers, t.dockerContainerStats = h.dockerContainerStats, t.dockerContainerProcesses = h.dockerContainerProcesses, t.dockerVolumes = h.dockerVolumes, t.dockerAll = h.dockerAll, t.vboxInfo = y.vboxInfo, t.printer = g.printer, t.usb = x.usb, t.audio = S.audio, t.bluetoothDevices = w.bluetoothDevices, t.getStaticData = se, t.getDynamicData = ne, t.getAllData = fe, t.get = W, t.observe = ye, t.powerShellStart = e.powerShellStart, t.powerShellRelease = e.powerShellRelease;
 })(yr);
-const je = /* @__PURE__ */ Jo(yr);
+const Ue = /* @__PURE__ */ Jo(yr);
 async function _u() {
   const [t, n, e, s, r, i, o] = await Promise.all([
-    je.mem(),
-    je.cpu(),
-    je.battery(),
-    je.system(),
-    je.processes(),
-    je.networkInterfaces(),
-    je.graphics()
+    Ue.mem(),
+    Ue.cpu(),
+    Ue.battery(),
+    Ue.system(),
+    Ue.processes(),
+    Ue.networkInterfaces(),
+    Ue.graphics()
   ]);
   return { mem: t, cpu: n, battery: e, system: s, processes: r, networkInterfaces: i, graphics: o };
 }
@@ -11988,7 +11988,7 @@ function Ou(t, n) {
       const s = t.match(/\/([^/]+)\.app(?:\/|$)/i);
       if (s) return s[1];
     }
-    const e = $e.basename(t).replace(/\.(exe|app)$/i, "");
+    const e = He.basename(t).replace(/\.(exe|app)$/i, "");
     if (e && e.toLowerCase() !== n.toLowerCase())
       return e;
   }
@@ -12190,7 +12190,7 @@ function pe(t, n) {
 function cs(t) {
   t.isDestroyed() || (t.isKiosk() || t.setKiosk(!0), t.setAlwaysOnTop(!0, "screen-saver"), t.setVisibleOnAllWorkspaces(!0, { visibleOnFullScreen: !0 }));
 }
-function Xe(t = !1) {
+function Ke(t = !1) {
   const n = Ie;
   if (!(!n || n.isDestroyed())) {
     try {
@@ -12257,7 +12257,7 @@ function Fu() {
         key: n,
         global: !0,
         blocked: !0
-      }), Xe(!0), ls();
+      }), Ke(!0), ls();
     }) && (n.includes("Shift+3") || n.includes("Shift+4") || n.includes("Shift+5"));
   as = !0;
 }
@@ -12273,7 +12273,7 @@ function Gu() {
         appName: t.name,
         pid: t.pid,
         bundleIdentifier: t.bundleIdentifier
-      })), Xe(!0);
+      })), Ke(!0);
     });
   }, 150));
 }
@@ -12283,7 +12283,7 @@ function Wu() {
 function zu() {
   _n || (_n = setInterval(() => {
     const t = Ie;
-    !ae || !t || t.isDestroyed() || t.isFocused() && t.isVisible() && !t.isMinimized() || (pe("focus_lost", { reason: "lockdown_watchdog" }), Xe(!0));
+    !ae || !t || t.isDestroyed() || t.isFocused() && t.isVisible() && !t.isMinimized() || (pe("focus_lost", { reason: "lockdown_watchdog" }), Ke(!0));
   }, 250));
 }
 function Uu() {
@@ -12309,7 +12309,7 @@ function Xu(t) {
 }
 async function Ku() {
   try {
-    return (await je.processes()).list.filter((n) => typeof n.name == "string" && Xu(n.name)).filter((n) => n.pid !== process.pid).map((n) => ({ pid: n.pid, name: n.name }));
+    return (await Ue.processes()).list.filter((n) => typeof n.name == "string" && Xu(n.name)).filter((n) => n.pid !== process.pid).map((n) => ({ pid: n.pid, name: n.name }));
   } catch {
     return [];
   }
@@ -12331,7 +12331,7 @@ function ju() {
           process.kill(e.pid);
         } catch {
         }
-      Xe(!0);
+      Ke(!0);
     });
   }, 1800));
 }
@@ -12396,10 +12396,10 @@ function Ju(t) {
   ].includes(n) : !1;
 }
 function Qu(t) {
-  Yu(), t.setResizable(!1), t.setMaximizable(!1), t.setMinimizable(!1), t.setContentProtection(!0), t.webContents.closeDevTools(), cs(t), Xe(!0), Fu(), wn = () => {
-    pe("window_minimized"), Xe(!0);
+  Yu(), t.setResizable(!1), t.setMaximizable(!1), t.setMinimizable(!1), t.setContentProtection(!0), t.webContents.closeDevTools(), cs(t), Ke(!0), Fu(), wn = () => {
+    pe("window_minimized"), Ke(!0);
   }, Ln = () => {
-    !ae || t.isDestroyed() || (cs(t), Xe(!0));
+    !ae || t.isDestroyed() || (cs(t), Ke(!0));
   }, t.on("minimize", wn), t.on("leave-full-screen", Ln), Gu(), zu(), ju(), $u();
 }
 function Zu(t) {
@@ -12433,7 +12433,7 @@ JSON.stringify(apps.map((item) => ({ pid: item.unixId(), name: item.name() })));
   }
 }
 async function uo() {
-  const t = await je.processes(), n = process.platform === "darwin" ? await np() : /* @__PURE__ */ new Set(), s = t.list.filter((o) => typeof o.name == "string" && o.name.trim().length > 0).filter((o) => o.pid === process.pid ? !1 : n.has(o.pid) ? !0 : lo.some((a) => hr(o.name, [a]))).map((o) => ({
+  const t = await Ue.processes(), n = process.platform === "darwin" ? await np() : /* @__PURE__ */ new Set(), s = t.list.filter((o) => typeof o.name == "string" && o.name.trim().length > 0).filter((o) => o.pid === process.pid ? !1 : n.has(o.pid) ? !0 : lo.some((a) => hr(o.name, [a]))).map((o) => ({
     name: o.name,
     pid: o.pid,
     path: typeof o.path == "string" ? o.path : void 0
@@ -12444,26 +12444,57 @@ async function uo() {
   }).filter((o) => o.allowed || !tp(o)).sort((o, a) => +!!o.allowed - +!!a.allowed || o.displayName.localeCompare(a.displayName));
 }
 async function sp(t) {
-  const n = await uo(), e = new Map(n.map((o) => [o.pid, o])), s = [], r = [], i = [];
-  for (const o of t) {
-    const a = e.get(o);
-    if (a) {
-      if (a.allowed) {
-        r.push(a);
-        continue;
-      }
+  const n = [...new Set(t.filter((l) => Number.isInteger(l) && l > 0))], e = await uo(), s = new Map(e.map((l) => [l.pid, l]));
+  let r = /* @__PURE__ */ new Map();
+  try {
+    const l = await Ue.processes();
+    r = new Map(
+      l.list.map((u) => [
+        u.pid,
+        {
+          name: typeof u.name == "string" ? u.name : void 0,
+          path: typeof u.path == "string" ? u.path : void 0
+        }
+      ])
+    );
+  } catch {
+  }
+  const i = [], o = [], a = [], c = (l) => new Promise((u) => setTimeout(u, l));
+  for (const l of n) {
+    const u = s.get(l);
+    if (u != null && u.allowed) {
+      o.push(u);
+      continue;
+    }
+    const d = r.get(l), p = (u == null ? void 0 : u.displayName) || (d == null ? void 0 : d.name) || `Process ${l}`;
+    if (l === process.pid) {
+      o.push(
+        u || {
+          pid: l,
+          processName: p,
+          displayName: p,
+          allowed: !0,
+          allowReason: "Exam application"
+        }
+      );
+      continue;
+    }
+    try {
+      process.kill(l, "SIGTERM"), await c(350);
       try {
-        process.kill(o, "SIGTERM"), s.push(o);
-      } catch (c) {
-        i.push({
-          pid: o,
-          displayName: a.displayName,
-          reason: c instanceof Error ? c.message : "Unable to close app"
-        });
+        process.kill(l, 0), process.kill(l, "SIGKILL");
+      } catch {
       }
+      i.push(l);
+    } catch (f) {
+      a.push({
+        pid: l,
+        displayName: p,
+        reason: f instanceof Error ? f.message : "Unable to close process"
+      });
     }
   }
-  return { closed: s, skipped: r, failed: i };
+  return { closed: i, skipped: o, failed: a };
 }
 function ip(t) {
   Dt.handle(Yt.LIST_RUNNING_APPS, async () => uo()), Dt.handle(
@@ -12471,7 +12502,7 @@ function ip(t) {
     async (n, e) => sp(Array.isArray(e) ? e : [])
   ), Dt.handle(Yt.START_LOCKDOWN, async () => {
     const n = t();
-    return n ? (Ie = n, ae = !0, Qu(n), await new Promise((e) => setTimeout(e, 150)), !n.isDestroyed() && !n.isKiosk() && (cs(n), Xe(), await new Promise((e) => setTimeout(e, 100))), { active: !n.isDestroyed() && n.isKiosk() }) : { active: !1 };
+    return n ? (Ie = n, ae = !0, Qu(n), await new Promise((e) => setTimeout(e, 150)), !n.isDestroyed() && !n.isKiosk() && (cs(n), Ke(), await new Promise((e) => setTimeout(e, 100))), { active: !n.isDestroyed() && n.isKiosk() }) : { active: !1 };
   }), Dt.handle(Yt.END_LOCKDOWN, () => {
     const n = Ie;
     return ae = !1, Ie = null, n && !n.isDestroyed() && Zu(n), { active: !1 };
@@ -12487,7 +12518,7 @@ function ip(t) {
   }), ce.on("browser-window-focus", (n, e) => {
     ae && e === Ie && pe("focus_restored");
   }), ce.on("browser-window-blur", (n, e) => {
-    ae && e === Ie && (pe("focus_lost"), Xe(!0));
+    ae && e === Ie && (pe("focus_lost"), Ke(!0));
   }), Zn.on("display-added", (n, e) => {
     ae && pe("display_changed", { action: "added", id: e.id });
   }), Zn.on("display-removed", (n, e) => {
@@ -12516,7 +12547,7 @@ function ip(t) {
         meta: r.meta,
         control: r.control,
         shift: r.shift
-      }), o && ls(), Xe(!0);
+      }), o && ls(), Ke(!0);
     });
   });
 }
@@ -12555,7 +12586,7 @@ function rp(t) {
   vn = null, t.webContents.send(po.EVENT, n);
 }
 function op(t) {
-  if (process.defaultApp && process.argv.length >= 2 ? ce.setAsDefaultProtocolClient(us, process.execPath, [$e.resolve(process.argv[1])]) : ce.setAsDefaultProtocolClient(us), !ce.requestSingleInstanceLock()) return !1;
+  if (process.defaultApp && process.argv.length >= 2 ? ce.setAsDefaultProtocolClient(us, process.execPath, [He.resolve(process.argv[1])]) : ce.setAsDefaultProtocolClient(us), !ce.requestSingleInstanceLock()) return !1;
   ce.on("second-instance", (e, s) => {
     fr(Xs(dr(s) ?? ""), t);
   }), ce.on("open-url", (e, s) => {
@@ -12564,26 +12595,26 @@ function op(t) {
   const n = Xs(dr(process.argv) ?? "");
   return n && (vn = n), !0;
 }
-const fo = $e.dirname(yo(import.meta.url));
-process.env.APP_ROOT = $e.join(fo, "..");
-const ni = process.env.VITE_DEV_SERVER_URL, Ip = $e.join(process.env.APP_ROOT, "dist-electron"), mo = $e.join(process.env.APP_ROOT, "dist");
-process.env.VITE_PUBLIC = ni ? $e.join(process.env.APP_ROOT, "public") : mo;
+const fo = He.dirname(yo(import.meta.url));
+process.env.APP_ROOT = He.join(fo, "..");
+const ni = process.env.VITE_DEV_SERVER_URL, Ip = He.join(process.env.APP_ROOT, "dist-electron"), mo = He.join(process.env.APP_ROOT, "dist");
+process.env.VITE_PUBLIC = ni ? He.join(process.env.APP_ROOT, "public") : mo;
 let Fe;
 function go() {
   Fe = new gr({
-    icon: $e.join(
+    icon: He.join(
       process.env.VITE_PUBLIC ?? process.env.APP_ROOT,
       "electron-vite.svg"
     ),
     webPreferences: {
-      preload: $e.join(fo, "preload.mjs"),
+      preload: He.join(fo, "preload.mjs"),
       contextIsolation: !0,
       nodeIntegration: !1,
       devTools: !1
     }
   }), Fe.webContents.on("did-finish-load", () => {
     Fe == null || Fe.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString()), rp(Fe);
-  }), ni ? Fe.loadURL(ni) : Fe.loadFile($e.join(mo, "index.html"));
+  }), ni ? Fe.loadURL(ni) : Fe.loadFile(He.join(mo, "index.html"));
 }
 ce.on("window-all-closed", () => {
   process.platform !== "darwin" && (ce.quit(), Fe = null);

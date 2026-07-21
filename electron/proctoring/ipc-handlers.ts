@@ -491,28 +491,74 @@ async function listRunningApps(): Promise<RunningApp[]> {
 }
 
 async function closeRunningApps(pids: number[]): Promise<CloseAppsResult> {
-  const apps = await listRunningApps()
-  const byPid = new Map(apps.map((item) => [item.pid, item]))
+  const uniquePids = [...new Set(pids.filter((pid) => Number.isInteger(pid) && pid > 0))]
+  const listedApps = await listRunningApps()
+  const byPid = new Map(listedApps.map((item) => [item.pid, item]))
+
+  let processByPid = new Map<number, { name?: string; path?: string }>()
+  try {
+    const processes = await si.processes()
+    processByPid = new Map(
+      processes.list.map((item) => [
+        item.pid,
+        {
+          name: typeof item.name === "string" ? item.name : undefined,
+          path: typeof item.path === "string" ? item.path : undefined,
+        },
+      ]),
+    )
+  } catch {
+    // Fall back to listed apps only for display names.
+  }
+
   const closed: number[] = []
   const skipped: RunningApp[] = []
   const failed: CloseAppsResult["failed"] = []
 
-  for (const pid of pids) {
-    const appInfo = byPid.get(pid)
-    if (!appInfo) continue
-    if (appInfo.allowed) {
-      skipped.push(appInfo)
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+  for (const pid of uniquePids) {
+    const listed = byPid.get(pid)
+    if (listed?.allowed) {
+      skipped.push(listed)
+      continue
+    }
+
+    const raw = processByPid.get(pid)
+    const displayName =
+      listed?.displayName ||
+      raw?.name ||
+      `Process ${pid}`
+
+    // Never kill our own exam process.
+    if (pid === process.pid) {
+      skipped.push(
+        listed || {
+          pid,
+          processName: displayName,
+          displayName,
+          allowed: true,
+          allowReason: "Exam application",
+        },
+      )
       continue
     }
 
     try {
       process.kill(pid, "SIGTERM")
+      await sleep(350)
+      try {
+        process.kill(pid, 0)
+        process.kill(pid, "SIGKILL")
+      } catch {
+        // Already exited after SIGTERM.
+      }
       closed.push(pid)
     } catch (err) {
       failed.push({
         pid,
-        displayName: appInfo.displayName,
-        reason: err instanceof Error ? err.message : "Unable to close app",
+        displayName,
+        reason: err instanceof Error ? err.message : "Unable to close process",
       })
     }
   }

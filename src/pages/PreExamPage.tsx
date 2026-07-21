@@ -6,6 +6,7 @@ import MediaConfirmation from '@/components/media/MediaConfirmation'
 import CheckAttentionPanel from '@/components/system-checks/CheckAttentionPanel'
 import CheckResultsGrid from '@/components/system-checks/CheckResultsGrid'
 import CheckSummaryBar from '@/components/system-checks/CheckSummaryBar'
+import { ApiError } from '@/lib/api'
 import { getExam, logPreExamEvent, startExamAttempt } from '@/lib/exams/api'
 import type { Exam } from '@/lib/exams/types'
 import { closeRunningApps, listRunningApps } from '@/lib/proctoring/api'
@@ -56,6 +57,9 @@ export default function PreExamPage() {
   const setProfile = useCalibrationStore((state) => state.setProfile)
   const clearProfile = useCalibrationStore((state) => state.clearProfile)
   const [exam, setExam] = useState<Exam | null>(null)
+  const [loadingExam, setLoadingExam] = useState(true)
+  const [examLoadError, setExamLoadError] = useState<string | null>(null)
+  const [examNotFound, setExamNotFound] = useState(false)
   const [step, setStep] = useState<Step>('checks')
   const [report, setReport] = useState<SystemCheckReport | null>(null)
   const [runningApps, setRunningApps] = useState<RunningApp[]>([])
@@ -76,19 +80,45 @@ export default function PreExamPage() {
   const closableApps = runningApps.filter((app) => !app.allowed)
 
   useEffect(() => {
-    if (!examId) return
+    if (!examId) {
+      setLoadingExam(false)
+      setExamNotFound(true)
+      return
+    }
     let cancelled = false
+    setLoadingExam(true)
+    setExamLoadError(null)
+    setExamNotFound(false)
     getExam(examId)
       .then((item) => {
-        if (!cancelled) setExam(item)
+        if (cancelled) return
+        if (item.attemptStatus === 'submitted') {
+          setExam(item)
+          setExamLoadError('You have already submitted this exam.')
+          return
+        }
+        if (item.attemptStatus === 'in_progress' && item.attemptId) {
+          navigate(`/exams/${item.id}/take?attemptId=${item.attemptId}`, { replace: true })
+          return
+        }
+        setExam(item)
       })
       .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Unable to load exam')
+        if (cancelled) return
+        if (err instanceof ApiError && (err.status === 404 || err.code === 'EXAM_NOT_FOUND')) {
+          setExamNotFound(true)
+          setExamLoadError(err.message || 'Exam not found')
+          return
+        }
+        setExamLoadError(err instanceof Error ? err.message : 'Unable to load exam')
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingExam(false)
       })
     return () => {
       cancelled = true
     }
-  }, [examId])
+  }, [examId, navigate])
 
   const runChecks = useCallback(async () => {
     setLoadingChecks(true)
@@ -279,6 +309,10 @@ export default function PreExamPage() {
         state: { attemptId: attempt.id },
       })
     } catch (err) {
+      if (err instanceof ApiError && err.code === 'ATTEMPT_ALREADY_SUBMITTED') {
+        setError('You have already submitted this exam.')
+        return
+      }
       setError(err instanceof Error ? err.message : 'Unable to start exam')
     } finally {
       setStarting(false)
@@ -286,8 +320,9 @@ export default function PreExamPage() {
   }
 
   useEffect(() => {
+    if (!exam || exam.attemptStatus === 'submitted') return
     void runChecks()
-  }, [runChecks])
+  }, [exam, runChecks])
 
   useEffect(() => {
     if (step === 'media') {
@@ -298,14 +333,70 @@ export default function PreExamPage() {
     return undefined
   }, [startMediaPreview, step, stopMediaPreview])
 
-  if (!exam) {
+  if (loadingExam) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f8f9fb]">
-        <div className="border border-gray-200 bg-white p-6 text-center">
-          <p className="text-sm font-semibold text-gray-900">Exam not found</p>
-          <Link to="/home" className="mt-3 inline-flex text-sm font-semibold text-[#df2428]">
-            Back to exams
-          </Link>
+      <div className="flex min-h-screen items-center justify-center bg-[#f3f4f7]">
+        <div className="rounded-2xl border border-gray-200 bg-white px-8 py-6 text-center shadow-sm">
+          <p className="text-sm font-semibold text-gray-900">Loading exam…</p>
+          <p className="mt-1 text-xs text-gray-500">Preparing system checks.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (exam?.attemptStatus === 'submitted') {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f3f4f7] px-4">
+        <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white px-6 py-8 text-center shadow-sm">
+          <p className="text-lg font-extrabold text-gray-900">Exam already submitted</p>
+          <p className="mt-2 text-sm leading-relaxed text-gray-600">
+            You have already taken <span className="font-semibold text-gray-900">{exam.title}</span>.
+            You cannot start it again.
+          </p>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <Link
+              to="/history"
+              className="inline-flex items-center justify-center rounded-xl bg-[#df2428] px-4 py-2.5 text-sm font-bold text-white"
+            >
+              View history
+            </Link>
+            <Link
+              to="/exams"
+              className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-800"
+            >
+              Back to exams
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (examNotFound || !exam) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f3f4f7] px-4">
+        <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white px-6 py-8 text-center shadow-sm">
+          <p className="text-lg font-extrabold text-gray-900">
+            {examNotFound ? 'Exam not found' : 'Unable to open exam'}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-gray-600">
+            {examLoadError ||
+              'This exam is unavailable, unpublished, or not assigned to your account.'}
+          </p>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <Link
+              to="/exams"
+              className="inline-flex items-center justify-center rounded-xl bg-[#df2428] px-4 py-2.5 text-sm font-bold text-white"
+            >
+              Back to exams
+            </Link>
+            <Link
+              to="/home"
+              className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-800"
+            >
+              Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -323,109 +414,106 @@ export default function PreExamPage() {
   const stepIndex = PRE_EXAM_STEPS.findIndex((item) => item.id === step)
   const immersiveLayout = step === 'media' || step === 'calibration'
 
+  const contentMax = immersiveLayout ? 'max-w-[1400px]' : 'max-w-6xl'
+
   return (
-    <div className={`flex min-h-screen flex-col bg-[#f8f9fb]`}>
+    <div className="flex min-h-screen flex-col bg-[#f3f4f7]">
       <header
-        className={`border-b border-gray-200 bg-white px-4 sm:px-6 ${
-          immersiveLayout ? 'py-2.5' : 'py-3 sm:py-4'
+        className={`border-b border-gray-200/80 bg-white ${
+          immersiveLayout ? 'px-4 py-2.5 sm:px-6' : 'px-5 py-4 sm:px-8 lg:px-10'
         }`}
       >
-        <div
-          className={`mx-auto flex w-full items-center justify-between gap-3 ${
-            immersiveLayout ? 'max-w-[1400px]' : 'max-w-6xl items-start sm:gap-4'
-          }`}
-        >
-          <div className="min-w-0">
-            <div className={`flex items-center gap-3 ${immersiveLayout ? '' : 'flex-col items-start'}`}>
-              <img
-                src={logoUrl}
-                alt="upGrad"
-                className={immersiveLayout ? 'h-6' : 'h-7 sm:h-8'}
-              />
-              {!immersiveLayout ? (
-                <>
-                  <h1 className="mt-2 truncate text-xl font-extrabold text-[#df2428] sm:text-2xl">
-                    {exam.title}
-                  </h1>
-                  <p className="mt-1 text-sm text-gray-700">{stepCopy(step)}</p>
-                </>
-              ) : (
-                <div className="min-w-0">
-                  <h1 className="truncate text-sm font-bold text-[#df2428] sm:text-base">
-                    {exam.title}
-                  </h1>
-                  <p className="truncate text-xs text-gray-500">{stepCopy(step)}</p>
+        <div className={`mx-auto w-full ${contentMax}`}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              {immersiveLayout ? (
+                <div className="flex items-center gap-3">
+                  <img src={logoUrl} alt="upGrad" className="h-6" />
+                  <div className="min-w-0">
+                    <h1 className="truncate text-sm font-bold text-[#df2428] sm:text-base">
+                      {exam.title}
+                    </h1>
+                    <p className="truncate text-xs text-gray-500">{stepCopy(step)}</p>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  <img src={logoUrl} alt="upGrad" className="h-7 sm:h-8" />
+                  <h1 className="mt-3 truncate text-2xl font-extrabold tracking-tight text-[#df2428] sm:text-[1.75rem]">
+                    {exam.title}
+                  </h1>
+                  <p className="mt-1.5 text-sm text-gray-600">{stepCopy(step)}</p>
+                </>
               )}
             </div>
+            <Link
+              to="/home"
+              className="shrink-0 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 sm:px-4"
+            >
+              Back
+            </Link>
           </div>
-          <Link
-            to="/home"
-            className="shrink-0 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-800 sm:px-4"
-          >
-            Back
-          </Link>
-        </div>
 
-        <div
-          className={`mx-auto flex w-full gap-1.5 overflow-x-auto ${
-            immersiveLayout ? 'mt-2.5 max-w-[1400px]' : 'mt-4 max-w-6xl gap-2 pb-1'
-          }`}
-        >
-          {PRE_EXAM_STEPS.map((item, index) => {
-            const reached = index <= stepIndex
-            const active = item.id === step
-            return (
-              <div
-                key={item.id}
-                className={`flex min-w-[6.5rem] flex-1 items-center gap-2 rounded border px-2.5 py-1.5 sm:px-3 ${
-                  active
-                    ? 'border-[#df2428]/30 bg-[#df2428]/5'
-                    : reached
-                      ? 'border-green-200 bg-green-50'
-                      : 'border-gray-200 bg-white'
-                }`}
-              >
-                <span
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+          <div
+            className={`flex w-full gap-2 overflow-x-auto ${
+              immersiveLayout ? 'mt-2.5' : 'mt-5'
+            }`}
+          >
+            {PRE_EXAM_STEPS.map((item, index) => {
+              const reached = index <= stepIndex
+              const active = item.id === step
+              return (
+                <div
+                  key={item.id}
+                  className={`flex min-w-[7rem] flex-1 items-center gap-2.5 rounded-xl border px-3 py-2.5 ${
                     active
-                      ? 'bg-[#df2428] text-white'
+                      ? 'border-[#df2428]/25 bg-[#df2428]/5 shadow-sm'
                       : reached
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-100 text-gray-500'
+                        ? 'border-green-200 bg-green-50'
+                        : 'border-gray-200 bg-[#fafbfc]'
                   }`}
                 >
-                  {reached && !active ? '✓' : index + 1}
-                </span>
-                <span
-                  className={`truncate text-[11px] font-semibold sm:text-xs ${
-                    active ? 'text-[#df2428]' : reached ? 'text-green-800' : 'text-gray-500'
-                  }`}
-                >
-                  {item.label}
-                </span>
-              </div>
-            )
-          })}
+                  <span
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
+                      active
+                        ? 'bg-[#df2428] text-white'
+                        : reached
+                          ? 'bg-green-600 text-white'
+                          : 'bg-white text-gray-500 ring-1 ring-gray-200'
+                    }`}
+                  >
+                    {reached && !active ? '✓' : index + 1}
+                  </span>
+                  <span
+                    className={`truncate text-xs font-semibold ${
+                      active ? 'text-[#df2428]' : reached ? 'text-green-800' : 'text-gray-500'
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </header>
 
       <main
-        className={`mx-auto grid w-full flex-1 ${
+        className={`mx-auto grid w-full flex-1 ${contentMax} ${
           immersiveLayout
-            ? 'max-w-[1400px] px-3 py-3 sm:px-4'
-            : 'max-w-6xl gap-4 px-4 py-4 sm:px-6 sm:py-5 lg:grid-cols-[1.4fr_0.8fr]'
+            ? 'px-4 py-3 sm:px-6'
+            : 'items-start gap-5 px-5 py-5 sm:gap-6 sm:px-8 sm:py-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(300px,0.72fr)] lg:px-10'
         }`}
       >
         <section className={`min-w-0 ${immersiveLayout ? 'flex min-h-[calc(100vh-11rem)] flex-col' : ''}`}>
           {error && immersiveLayout ? (
-            <div className="mb-2 shrink-0 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <div className="mb-2 shrink-0 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {error}
             </div>
           ) : null}
 
           {step === 'checks' ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {report ? (
                 <>
                   <CheckSummaryBar
@@ -436,7 +524,7 @@ export default function PreExamPage() {
                   <CheckResultsGrid checks={report.checks} isRunning={loadingChecks} />
                 </>
               ) : (
-                <div className="border border-gray-200 bg-white p-5 text-sm text-gray-700">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-700 shadow-sm">
                   Running system checks…
                 </div>
               )}
@@ -444,15 +532,15 @@ export default function PreExamPage() {
           ) : null}
 
           {step === 'apps' ? (
-            <div className="border border-gray-200 bg-white">
-              <div className="border-b border-gray-200 px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+              <div className="border-b border-gray-100 px-5 py-4 sm:px-6">
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-gray-500">
                   Running applications
                 </p>
-                <h2 className="mt-1 text-xl font-bold text-gray-900">
+                <h2 className="mt-1.5 text-xl font-bold tracking-tight text-gray-900">
                   Close all apps except this exam app
                 </h2>
-                <p className="mt-1 text-sm text-gray-700">
+                <p className="mt-1.5 text-sm leading-relaxed text-gray-600">
                   Cursor is allowed for local testing. Every other visible app must be closed before
                   Next is enabled.
                 </p>
@@ -461,12 +549,14 @@ export default function PreExamPage() {
                 {runningApps.map((app) => (
                   <div
                     key={`${app.path ?? app.processName}-${app.pid}`}
-                    className="flex gap-3 border-b border-r border-gray-100 p-3"
+                    className="flex items-center gap-3 border-b border-gray-50 px-5 py-4 sm:border-r"
                   >
                     <RunningAppIcon app={app} />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-gray-900">{app.displayName}</p>
-                      <p className="truncate text-xs text-gray-500">{app.processName}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold leading-tight text-gray-900">
+                        {app.displayName}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs text-gray-500">{app.processName}</p>
                       {app.allowed ? (
                         <p className="mt-1 text-[11px] font-semibold text-green-700">
                           {app.allowReason}
@@ -510,26 +600,30 @@ export default function PreExamPage() {
         </section>
 
         {!immersiveLayout ? (
-          <aside className="min-w-0 space-y-3">
+          <aside className="min-w-0 space-y-4 lg:sticky lg:top-5">
             {error ? (
-              <div className="border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
             ) : null}
 
             {step === 'checks' ? (
               <>
-                <CheckAttentionPanel items={attentionItems} />
-                <div className="border border-gray-200 bg-white p-4">
+                <CheckAttentionPanel
+                  items={attentionItems}
+                  onResolved={() => void runChecks()}
+                />
+                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                   <p className="text-sm font-semibold text-gray-900">Next step</p>
-                  <p className="mt-1 text-xs leading-relaxed text-gray-600">
-                    After required checks pass, review all running applications before the locked
-                    exam opens.
+                  <p className="mt-1.5 text-xs leading-relaxed text-gray-600">
+                    Fix issues above, then continue once required checks pass.
                   </p>
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-4 flex gap-2.5">
                     <button
                       type="button"
                       disabled={loadingChecks}
                       onClick={() => void runChecks()}
-                      className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-800 disabled:opacity-50"
+                      className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 disabled:opacity-50"
                     >
                       Re-run
                     </button>
@@ -537,7 +631,7 @@ export default function PreExamPage() {
                       type="button"
                       disabled={!report?.passed || loadingApps}
                       onClick={() => void loadApps()}
-                      className="flex-1 rounded-md bg-[#df2428] px-3 py-2 text-sm font-bold text-white disabled:opacity-50"
+                      className="flex-1 rounded-xl bg-[#df2428] px-3 py-2.5 text-sm font-bold text-white transition hover:bg-[#c51f23] disabled:opacity-50"
                     >
                       {loadingApps ? 'Loading…' : 'Next'}
                     </button>
@@ -547,9 +641,9 @@ export default function PreExamPage() {
             ) : null}
 
             {step === 'apps' ? (
-              <div className="border border-gray-200 bg-white p-4">
+              <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                 <p className="text-sm font-semibold text-gray-900">Before starting</p>
-                <ul className="mt-2 space-y-1 text-xs leading-relaxed text-gray-700">
+                <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-gray-600">
                   <li>Close all detected apps using the button below.</li>
                   <li>Cursor is allowed only for local testing.</li>
                   <li>Next unlocks only when no closable apps remain.</li>
@@ -558,7 +652,7 @@ export default function PreExamPage() {
                   type="button"
                   disabled={closableApps.length === 0 || closingApps}
                   onClick={() => void closeApps()}
-                  className="mt-4 w-full rounded-md border border-gray-300 px-4 py-3 text-sm font-bold text-gray-800 disabled:opacity-50"
+                  className="mt-4 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-800 transition hover:bg-gray-50 disabled:opacity-50"
                 >
                   {closingApps
                     ? 'Closing apps…'
@@ -568,7 +662,7 @@ export default function PreExamPage() {
                   type="button"
                   disabled={closableApps.length > 0}
                   onClick={() => setStep('media')}
-                  className="mt-2 w-full rounded-md bg-[#df2428] px-4 py-3 text-sm font-bold uppercase tracking-wide text-white disabled:opacity-50"
+                  className="mt-2.5 w-full rounded-xl bg-[#df2428] px-4 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#c51f23] disabled:opacity-50"
                 >
                   Next: camera and audio
                 </button>

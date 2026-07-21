@@ -32,12 +32,16 @@ export type Exam = {
   questionCount: number
   codingCount?: number
   questions: ExamQuestion[]
+  attemptStatus?: "in_progress" | "submitted" | null
+  attemptId?: string | null
 }
 
 export type ExamSummary = Omit<Exam, "questions"> & {
   questionCount: number
   codingCount?: number
   availability?: "available" | "upcoming" | "closed"
+  attemptStatus?: "in_progress" | "submitted" | null
+  attemptId?: string | null
 }
 
 export type ExamAnswerMap = Record<string, number | string>

@@ -91,8 +91,11 @@ export default function DashboardPage() {
     return () => window.clearInterval(timer)
   }, [])
 
-  const availableExams = exams.filter((exam) => exam.availability === 'available')
+  const availableExams = exams.filter(
+    (exam) => exam.availability === 'available' && exam.attemptStatus !== 'submitted',
+  )
   const featured = availableExams[0] ?? null
+  const featuredIsResume = featured?.attemptStatus === 'in_progress'
   const readiness = summary?.avgScore
   const trajectory = summary?.trajectory ?? []
   const maxDuration = Math.max(
@@ -144,10 +147,15 @@ export default function DashboardPage() {
           </Link>
           {featured ? (
             <Link
-              to={`/exams/${featured.id}/start`}
+              to={
+                featuredIsResume && featured.attemptId
+                  ? `/exams/${featured.id}/take?attemptId=${featured.attemptId}`
+                  : `/exams/${featured.id}/start`
+              }
               className="inline-flex items-center gap-2 rounded-full bg-[#df2428] px-4 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-[#c51f23]"
             >
-              Resume next exam <Zap className="h-4 w-4" fill="currentColor" />
+              {featuredIsResume ? 'Resume exam' : 'Start next exam'}{' '}
+              <Zap className="h-4 w-4" fill="currentColor" />
             </Link>
           ) : (
             <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-400">
@@ -205,10 +213,15 @@ export default function DashboardPage() {
                 </div>
                 <div className="mt-5 flex flex-wrap gap-2">
                   <Link
-                    to={`/exams/${featured.id}/start`}
+                    to={
+                      featuredIsResume && featured.attemptId
+                        ? `/exams/${featured.id}/take?attemptId=${featured.attemptId}`
+                        : `/exams/${featured.id}/start`
+                    }
                     className="inline-flex items-center gap-2 rounded-full bg-[#df2428] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#c51f23]"
                   >
-                    Start exam <ArrowUpRight className="h-4 w-4" />
+                    {featuredIsResume ? 'Resume exam' : 'Start exam'}{' '}
+                    <ArrowUpRight className="h-4 w-4" />
                   </Link>
                   <Link
                     to="/system-check"
@@ -223,7 +236,8 @@ export default function DashboardPage() {
               <>
                 <h2 className="text-2xl font-extrabold">No exam in queue</h2>
                 <p className="mt-2 text-sm text-white/60">
-                  When an exam becomes available from the database, it will appear here.
+                  When an exam becomes available, it will appear here. Completed exams no longer
+                  show Start.
                 </p>
               </>
             )}
