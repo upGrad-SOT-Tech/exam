@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld("systemChecks", {
   isAvailable: () => true,
   getDefinitions: () => ipcRenderer.invoke(IPC.GET_DEFINITIONS),
   runAll: (media?: MediaCheckInput) => ipcRenderer.invoke(IPC.RUN_ALL, media),
+  clearClipboard: () => ipcRenderer.invoke(IPC.CLEAR_CLIPBOARD),
 });
 
 contextBridge.exposeInMainWorld("proctoring", {

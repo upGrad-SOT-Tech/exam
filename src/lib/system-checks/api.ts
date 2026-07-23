@@ -8,6 +8,7 @@ import type {
 const IPC = {
   RUN_ALL: "system-checks:run-all",
   GET_DEFINITIONS: "system-checks:get-definitions",
+  CLEAR_CLIPBOARD: "system-checks:clear-clipboard",
 } as const;
 
 function getBridge() {
@@ -32,6 +33,17 @@ export async function runSystemChecks(
     throw new Error("System checks are only available in the desktop app");
   }
   return bridge.runAll(media);
+}
+
+export async function clearSystemClipboard(): Promise<{
+  cleared: boolean;
+  remainingFormats: string[];
+}> {
+  const bridge = getBridge();
+  if (!bridge?.clearClipboard) {
+    throw new Error("Clear clipboard is only available in the desktop app");
+  }
+  return bridge.clearClipboard();
 }
 
 export async function submitSystemCheckAudit(

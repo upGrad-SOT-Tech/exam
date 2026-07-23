@@ -1,4 +1,5 @@
-import { BrowserWindow, app, clipboard, globalShortcut, ipcMain, powerMonitor, screen, session, shell } from "electron"
+import { BrowserWindow, app, globalShortcut, ipcMain, powerMonitor, screen, session, shell } from "electron"
+import { clearSystemClipboard } from "../system-checks/clipboard"
 import si from "systeminformation"
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
@@ -229,10 +230,7 @@ function stopFocusWatchdog() {
 }
 
 function sanitizeClipboard() {
-  try {
-    clipboard.clear()
-  } catch {
-  }
+  clearSystemClipboard()
 }
 
 function startClipboardGuard() {

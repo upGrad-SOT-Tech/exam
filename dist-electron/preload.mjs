@@ -2,7 +2,8 @@
 const electron = require("electron");
 const IPC = {
   RUN_ALL: "system-checks:run-all",
-  GET_DEFINITIONS: "system-checks:get-definitions"
+  GET_DEFINITIONS: "system-checks:get-definitions",
+  CLEAR_CLIPBOARD: "system-checks:clear-clipboard"
 };
 const PROCTORING_IPC = {
   START_LOCKDOWN: "proctoring:start-lockdown",
@@ -18,7 +19,8 @@ const DEEP_LINK_IPC = {
 electron.contextBridge.exposeInMainWorld("systemChecks", {
   isAvailable: () => true,
   getDefinitions: () => electron.ipcRenderer.invoke(IPC.GET_DEFINITIONS),
-  runAll: (media) => electron.ipcRenderer.invoke(IPC.RUN_ALL, media)
+  runAll: (media) => electron.ipcRenderer.invoke(IPC.RUN_ALL, media),
+  clearClipboard: () => electron.ipcRenderer.invoke(IPC.CLEAR_CLIPBOARD)
 });
 electron.contextBridge.exposeInMainWorld("proctoring", {
   listRunningApps: () => electron.ipcRenderer.invoke(PROCTORING_IPC.LIST_RUNNING_APPS),

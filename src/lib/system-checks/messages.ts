@@ -80,7 +80,7 @@ const CHECK_COPY: Partial<
   clipboard: {
     title: "Clipboard not empty",
     summary: "Copied text or files were found on your clipboard.",
-    fixHint: "Copy a blank space, or restart the app to clear clipboard data.",
+    fixHint: "Use Clear clipboard below — copying a blank space does not remove clipboard data.",
   },
   browser_version: {
     title: "App version outdated",

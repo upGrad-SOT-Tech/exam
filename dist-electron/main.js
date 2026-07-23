@@ -11,9 +11,51 @@ import require$$6 from "http";
 import require$$0$2 from "net";
 import { execFile as execFile$1 } from "node:child_process";
 import { promisify as promisify$1 } from "node:util";
+function clearSystemClipboard() {
+  try {
+    clipboard.clear();
+  } catch {
+  }
+  try {
+    clipboard.write({ text: "" });
+  } catch {
+    try {
+      clipboard.writeText("");
+    } catch {
+    }
+  }
+  try {
+    clipboard.clear();
+  } catch {
+  }
+  const remainingFormats = clipboard.availableFormats();
+  const remainingText = clipboard.readText();
+  const cleared = remainingFormats.length === 0 || remainingFormats.every((format) => format.startsWith("text/")) && remainingText.trim().length === 0;
+  if (cleared && remainingFormats.length > 0) {
+    try {
+      clipboard.clear();
+    } catch {
+    }
+  }
+  const formatsAfter = clipboard.availableFormats();
+  const textAfter = clipboard.readText();
+  const fullyCleared = formatsAfter.length === 0 && textAfter.trim().length === 0;
+  return {
+    cleared: fullyCleared || cleared,
+    remainingFormats: fullyCleared ? [] : formatsAfter
+  };
+}
+function isClipboardEmpty() {
+  const formats = clipboard.availableFormats();
+  const text = clipboard.readText();
+  if (text.trim().length > 0) return false;
+  if (formats.length === 0) return true;
+  return formats.every((format) => format.startsWith("text/")) && text.trim().length === 0;
+}
 const IPC = {
   RUN_ALL: "system-checks:run-all",
-  GET_DEFINITIONS: "system-checks:get-definitions"
+  GET_DEFINITIONS: "system-checks:get-definitions",
+  CLEAR_CLIPBOARD: "system-checks:clear-clipboard"
 };
 const CHECK_DEFINITIONS = [
   { id: "webcam", label: "Webcam available", severity: "block", timeoutMs: 12e3 },
@@ -128,19 +170,18 @@ function randomRunId() {
 }
 function collectClipboard(definition) {
   const startedAt = Date.now();
-  const formats = clipboard.availableFormats();
-  const hasText = formats.length > 0 || clipboard.readText().trim().length > 0;
-  if (!hasText) {
+  const empty = isClipboardEmpty();
+  if (empty) {
     return createResult(definition, "passed", "Clipboard is empty", startedAt, {
-      formatCount: formats.length
+      formatCount: 0
     });
   }
   return createResult(
     definition,
     "warning",
-    "Clipboard contains data — clear clipboard before starting the exam",
+    "Clipboard contains data — clear it before starting the exam",
     startedAt,
-    { formatCount: formats.length, formats: formats.slice(0, 5) }
+    { hasClipboardData: true }
   );
 }
 function collectScreenResolution(definition) {
@@ -18789,6 +18830,7 @@ function registerSystemCheckHandlers() {
   ipcMain.handle(IPC.RUN_ALL, async (_event, media) => {
     return runNativeChecks(media);
   });
+  ipcMain.handle(IPC.CLEAR_CLIPBOARD, () => clearSystemClipboard());
 }
 const PROCTORING_IPC = {
   START_LOCKDOWN: "proctoring:start-lockdown",
@@ -18976,10 +19018,7 @@ function stopFocusWatchdog() {
   focusWatchdogTimer = null;
 }
 function sanitizeClipboard() {
-  try {
-    clipboard.clear();
-  } catch {
-  }
+  clearSystemClipboard();
 }
 function startClipboardGuard() {
   if (clipboardGuardTimer) return;

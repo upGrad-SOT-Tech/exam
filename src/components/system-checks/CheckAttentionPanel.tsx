@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react'
 import AppIcon from '@/components/system-checks/AppIcon'
 import type { AttentionItem } from '@/lib/system-checks/messages'
 import type { DetectedApp } from '@/lib/system-checks/detected-app'
+import { clearSystemClipboard } from '@/lib/system-checks/api'
 import { closeRunningApps } from '@/lib/proctoring/api'
 
 type CheckAttentionPanelProps = {
@@ -16,6 +17,7 @@ type PendingClose = { apps: DetectedApp[]; all: boolean }
 export default function CheckAttentionPanel({ items, onResolved }: CheckAttentionPanelProps) {
   const [closingPids, setClosingPids] = useState<number[]>([])
   const [closingAll, setClosingAll] = useState(false)
+  const [clearingClipboard, setClearingClipboard] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
   // Quitting someone's apps can lose unsaved work, so a close button arms this instead of acting:
   // the candidate sees exactly what will be quit and has to agree before anything is signalled.
@@ -26,6 +28,15 @@ export default function CheckAttentionPanel({ items, onResolved }: CheckAttentio
       items.filter(
         (item): item is Extract<AttentionItem, { kind: 'app' }> =>
           item.kind === 'app' && item.app.pid > 0,
+      ),
+    [items],
+  )
+
+  const clipboardItems = useMemo(
+    () =>
+      items.filter(
+        (item): item is Extract<AttentionItem, { kind: 'check' }> =>
+          item.kind === 'check' && item.check.id === 'clipboard',
       ),
     [items],
   )
@@ -55,6 +66,26 @@ export default function CheckAttentionPanel({ items, onResolved }: CheckAttentio
     }
   }
 
+  const clearClipboard = async () => {
+    setActionError(null)
+    setClearingClipboard(true)
+    try {
+      const result = await clearSystemClipboard()
+      if (!result.cleared) {
+        setActionError(
+          result.remainingFormats.length
+            ? `Clipboard still has data (${result.remainingFormats.slice(0, 3).join(', ')}). Try again or restart the app.`
+            : 'Clipboard could not be fully cleared. Try again or restart the app.',
+        )
+      }
+      window.setTimeout(() => onResolved?.(), 400)
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Unable to clear clipboard')
+    } finally {
+      setClearingClipboard(false)
+    }
+  }
+
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-5">
@@ -68,25 +99,38 @@ export default function CheckAttentionPanel({ items, onResolved }: CheckAttentio
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-3.5">
         <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-gray-500">
           Fix these ({items.length})
         </p>
-        {closableApps.length > 0 ? (
-          <button
-            type="button"
-            disabled={closingAll || closingPids.length > 0}
-            onClick={() =>
-              setPending({ apps: closableApps.map((item) => item.app), all: true })
-            }
-            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-800 hover:bg-gray-50 disabled:opacity-50"
-          >
-            {closingAll ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
-            {closingAll
-              ? 'Closing…'
-              : `Close ${closableApps.length}`}
-          </button>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {clipboardItems.length > 0 ? (
+            <button
+              type="button"
+              disabled={clearingClipboard}
+              onClick={() => void clearClipboard()}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide text-amber-900 hover:bg-amber-100 disabled:opacity-50"
+            >
+              {clearingClipboard ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+              {clearingClipboard ? 'Clearing…' : 'Clear clipboard'}
+            </button>
+          ) : null}
+          {closableApps.length > 0 ? (
+            <button
+              type="button"
+              disabled={closingAll || closingPids.length > 0}
+              onClick={() =>
+                setPending({ apps: closableApps.map((item) => item.app), all: true })
+              }
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide text-gray-800 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {closingAll ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+              {closingAll
+                ? 'Closing…'
+                : `Close ${closableApps.length}`}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="space-y-3 p-4 sm:p-5">
@@ -177,11 +221,24 @@ export default function CheckAttentionPanel({ items, onResolved }: CheckAttentio
             )
           }
 
+          const isClipboard = item.check.id === 'clipboard'
+
           return (
             <article key={item.check.id} className={`rounded-xl border px-4 py-3.5 ${shell}`}>
               <p className={`text-sm font-semibold ${titleClass}`}>{item.title}</p>
               <p className="mt-1.5 text-xs leading-relaxed text-gray-700">{item.summary}</p>
               <p className="mt-2 text-xs font-medium leading-relaxed text-gray-800">{item.fixHint}</p>
+              {isClipboard ? (
+                <button
+                  type="button"
+                  disabled={clearingClipboard}
+                  onClick={() => void clearClipboard()}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:bg-amber-700 disabled:opacity-50"
+                >
+                  {clearingClipboard ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                  {clearingClipboard ? 'Clearing…' : 'Clear clipboard'}
+                </button>
+              ) : null}
             </article>
           )
         })}

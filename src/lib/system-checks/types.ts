@@ -72,5 +72,6 @@ export type MediaCheckInput = {
 export type SystemChecksApi = {
   getDefinitions: () => Promise<CheckDefinition[]>;
   runAll: (media?: MediaCheckInput) => Promise<SystemCheckReport>;
+  clearClipboard: () => Promise<{ cleared: boolean; remainingFormats: string[] }>;
   isAvailable: () => boolean;
 };

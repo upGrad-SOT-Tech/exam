@@ -1,23 +1,22 @@
-import { clipboard } from 'electron'
 import type { CheckDefinition, CheckResult } from '../types'
 import { createResult } from '../utils'
+import { isClipboardEmpty } from '../clipboard'
 
 export function collectClipboard(definition: CheckDefinition): CheckResult {
   const startedAt = Date.now()
-  const formats = clipboard.availableFormats()
-  const hasText = formats.length > 0 || clipboard.readText().trim().length > 0
+  const empty = isClipboardEmpty()
 
-  if (!hasText) {
+  if (empty) {
     return createResult(definition, 'passed', 'Clipboard is empty', startedAt, {
-      formatCount: formats.length,
+      formatCount: 0,
     })
   }
 
   return createResult(
     definition,
     'warning',
-    'Clipboard contains data — clear clipboard before starting the exam',
+    'Clipboard contains data — clear it before starting the exam',
     startedAt,
-    { formatCount: formats.length, formats: formats.slice(0, 5) },
+    { hasClipboardData: true },
   )
 }
