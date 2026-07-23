@@ -1,1 +1,63 @@
-"use strict";const e=require("electron"),c={RUN_ALL:"system-checks:run-all",GET_DEFINITIONS:"system-checks:get-definitions"},i={START_LOCKDOWN:"proctoring:start-lockdown",END_LOCKDOWN:"proctoring:end-lockdown",LIST_RUNNING_APPS:"proctoring:list-running-apps",CLOSE_RUNNING_APPS:"proctoring:close-running-apps",CAPTURE_EXAM_SCREEN:"proctoring:capture-exam-screen",EVENT:"proctoring:event"},p={EVENT:"deep-link:event"};e.contextBridge.exposeInMainWorld("systemChecks",{isAvailable:()=>!0,getDefinitions:()=>e.ipcRenderer.invoke(c.GET_DEFINITIONS),runAll:n=>e.ipcRenderer.invoke(c.RUN_ALL,n)});e.contextBridge.exposeInMainWorld("proctoring",{listRunningApps:()=>e.ipcRenderer.invoke(i.LIST_RUNNING_APPS),closeRunningApps:n=>e.ipcRenderer.invoke(i.CLOSE_RUNNING_APPS,n),startLockdown:()=>e.ipcRenderer.invoke(i.START_LOCKDOWN),endLockdown:()=>e.ipcRenderer.invoke(i.END_LOCKDOWN),captureExamScreen:()=>e.ipcRenderer.invoke(i.CAPTURE_EXAM_SCREEN),onEvent:n=>{const r=(o,t)=>n(t);return e.ipcRenderer.on(i.EVENT,r),()=>e.ipcRenderer.off(i.EVENT,r)}});e.contextBridge.exposeInMainWorld("examLauncher",{isAvailable:()=>!0,onDeepLink:n=>{const r=(o,t)=>n(t);return e.ipcRenderer.on(p.EVENT,r),()=>e.ipcRenderer.off(p.EVENT,r)}});e.contextBridge.exposeInMainWorld("ipcRenderer",{on(...n){const[r,o]=n;return e.ipcRenderer.on(r,(t,...s)=>o(t,...s))},off(...n){const[r,...o]=n;return e.ipcRenderer.off(r,...o)},send(...n){const[r,...o]=n;return e.ipcRenderer.send(r,...o)},invoke(...n){const[r,...o]=n;return e.ipcRenderer.invoke(r,...o)}});
+"use strict";
+const electron = require("electron");
+const IPC = {
+  RUN_ALL: "system-checks:run-all",
+  GET_DEFINITIONS: "system-checks:get-definitions"
+};
+const PROCTORING_IPC = {
+  START_LOCKDOWN: "proctoring:start-lockdown",
+  END_LOCKDOWN: "proctoring:end-lockdown",
+  LIST_RUNNING_APPS: "proctoring:list-running-apps",
+  CLOSE_RUNNING_APPS: "proctoring:close-running-apps",
+  CAPTURE_EXAM_SCREEN: "proctoring:capture-exam-screen",
+  EVENT: "proctoring:event"
+};
+const DEEP_LINK_IPC = {
+  EVENT: "deep-link:event"
+};
+electron.contextBridge.exposeInMainWorld("systemChecks", {
+  isAvailable: () => true,
+  getDefinitions: () => electron.ipcRenderer.invoke(IPC.GET_DEFINITIONS),
+  runAll: (media) => electron.ipcRenderer.invoke(IPC.RUN_ALL, media)
+});
+electron.contextBridge.exposeInMainWorld("proctoring", {
+  listRunningApps: () => electron.ipcRenderer.invoke(PROCTORING_IPC.LIST_RUNNING_APPS),
+  closeRunningApps: (pids) => electron.ipcRenderer.invoke(PROCTORING_IPC.CLOSE_RUNNING_APPS, pids),
+  startLockdown: () => electron.ipcRenderer.invoke(PROCTORING_IPC.START_LOCKDOWN),
+  endLockdown: () => electron.ipcRenderer.invoke(PROCTORING_IPC.END_LOCKDOWN),
+  captureExamScreen: () => electron.ipcRenderer.invoke(PROCTORING_IPC.CAPTURE_EXAM_SCREEN),
+  onEvent: (listener) => {
+    const wrapped = (_event, payload) => listener(payload);
+    electron.ipcRenderer.on(PROCTORING_IPC.EVENT, wrapped);
+    return () => electron.ipcRenderer.off(PROCTORING_IPC.EVENT, wrapped);
+  }
+});
+electron.contextBridge.exposeInMainWorld("examLauncher", {
+  isAvailable: () => true,
+  onDeepLink: (listener) => {
+    const wrapped = (_event, payload) => listener(payload);
+    electron.ipcRenderer.on(DEEP_LINK_IPC.EVENT, wrapped);
+    return () => electron.ipcRenderer.off(DEEP_LINK_IPC.EVENT, wrapped);
+  }
+});
+electron.contextBridge.exposeInMainWorld("ipcRenderer", {
+  on(...args) {
+    const [channel, listener] = args;
+    return electron.ipcRenderer.on(
+      channel,
+      (event, ...args2) => listener(event, ...args2)
+    );
+  },
+  off(...args) {
+    const [channel, ...omit] = args;
+    return electron.ipcRenderer.off(channel, ...omit);
+  },
+  send(...args) {
+    const [channel, ...omit] = args;
+    return electron.ipcRenderer.send(channel, ...omit);
+  },
+  invoke(...args) {
+    const [channel, ...omit] = args;
+    return electron.ipcRenderer.invoke(channel, ...omit);
+  }
+});
