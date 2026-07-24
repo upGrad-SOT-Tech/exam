@@ -12,6 +12,7 @@ export const CHECK_DEFINITIONS: CheckDefinition[] = [
   { id: 'virtual_machine', label: 'Virtual machine detection', severity: 'block', timeoutMs: 8_000 },
   { id: 'multiple_monitors', label: 'Multiple monitors', severity: 'block', timeoutMs: 3_000 },
   { id: 'screen_recording', label: 'Screen recording software', severity: 'block', timeoutMs: 10_000 },
+  { id: 'ai_assistant', label: 'AI assistant tools', severity: 'block', timeoutMs: 8_000 },
   { id: 'running_applications', label: 'Running applications', severity: 'warn', timeoutMs: 10_000 },
   { id: 'remote_desktop', label: 'Remote desktop', severity: 'block', timeoutMs: 10_000 },
   { id: 'obs', label: 'OBS', severity: 'block', timeoutMs: 8_000 },
@@ -78,6 +79,31 @@ export const SCREEN_RECORDING_PROCESSES = [
   'fraps',
   'nvidia shadowplay',
   'geforce experience',
+]
+
+// "Undetectable" AI interview/exam assistants. These overlay tools deliberately hide their windows
+// from screenshots and screen-sharing (Zoom/Meet), so a proctor watching a shared screen never sees
+// them — but the OS still runs them as a process, and many install a login item that runs in the
+// background (LSUIElement / agent), which is why they are missed by the visible-GUI app scan. Matched
+// as a lowercased substring of the process name, so keep entries specific to avoid false positives.
+// Extend this list as new tools appear.
+export const AI_ASSISTANT_PROCESSES = [
+  'parakeet',
+  'cluely',
+  'interviewcoder',
+  'interview coder',
+  'leetcodewizard',
+  'leetcode wizard',
+  'finalround',
+  'final round',
+  'lockedinai',
+  'lockedin ai',
+  'senseiai',
+  'sensei ai',
+  'interviewsidekick',
+  'interview sidekick',
+  'echoo',
+  'ultracode',
 ]
 
 export const OBS_PROCESSES = ['obs', 'obs64', 'obs studio', 'streamlabs']

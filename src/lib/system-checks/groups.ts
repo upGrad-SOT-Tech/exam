@@ -43,6 +43,7 @@ export const CHECK_CATEGORIES: CheckCategory[] = [
     description: 'Blocked apps and recording tools',
     checks: [
       'screen_recording',
+      'ai_assistant',
       'running_applications',
       'remote_desktop',
       'obs',

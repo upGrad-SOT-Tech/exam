@@ -7,6 +7,7 @@ import { PROCTORING_IPC } from "./ipc-channels"
 import type { CloseAppsResult, ProctorEvent, RunningApp } from "./types"
 import { resolveDetectedApps } from "../system-checks/services/process-apps.service"
 import {
+  AI_ASSISTANT_PROCESSES,
   ANYDESK_PROCESSES,
   OBS_PROCESSES,
   REMOTE_DESKTOP_PROCESSES,
@@ -34,13 +35,17 @@ const execFileAsync = promisify(execFile)
 // permission union only names "display-capture", but older builds ask with "desktopCapturer", and
 // a request we don't recognise must still be blocked rather than silently type-checked away.
 const CAPTURE_PERMISSIONS = new Set(["display-capture", "desktopCapturer"])
-const developmentAllowedAppNames = ["cursor", "electron", "electron-vite-project", "node"]
+// Substring-matched against "<displayName> <processName> <path>" (lowercased) in isAllowedApp().
+// Keeps local dev tooling — the editors that run the backend, Node, the Electron shell, Chrome —
+// off the pre-exam "close these apps" kill-list. Only consulted when NOT packaged (see isAllowedApp).
+const developmentAllowedAppNames = ["cursor", "claude", "chrome", "electron", "electron-vite-project", "node"]
 const prohibitedPatterns = [
   ...REMOTE_DESKTOP_PROCESSES,
   ...SCREEN_RECORDING_PROCESSES,
   ...OBS_PROCESSES,
   ...TEAMVIEWER_PROCESSES,
   ...ANYDESK_PROCESSES,
+  ...AI_ASSISTANT_PROCESSES,
 ]
 const systemGuiNames = [
   "Finder",
@@ -432,7 +437,12 @@ function releaseWindowPolicy(win: BrowserWindow) {
 function isAllowedApp(appInfo: RunningApp) {
   const label = `${appInfo.displayName} ${appInfo.processName} ${appInfo.path ?? ""}`.toLowerCase()
   if (appInfo.pid === process.pid) return "Exam application"
-  if (app.isPackaged) return null
+  // The dev allowlist always applies to the unpackaged build. A packaged build opts in ONLY when
+  // launched with EXAM_ALLOW_DEV_APPS=1 — for local end-to-end deep-link testing, where the exam
+  // runs from the installed app but the tester still needs their editor/backend alive. Production
+  // packaged launches leave it unset, so every non-exam app stays on the pre-exam close-list.
+  const devAppsAllowed = !app.isPackaged || process.env.EXAM_ALLOW_DEV_APPS === "1"
+  if (!devAppsAllowed) return null
   const allowed = developmentAllowedAppNames.find((name) => label.includes(name))
   return allowed ? `Allowed for local testing: ${allowed}` : null
 }

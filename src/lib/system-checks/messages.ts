@@ -23,14 +23,16 @@ const CHECK_COPY: Partial<
   Record<CheckId, { title: string; summary: string; fixHint: string }>
 > = {
   webcam: {
-    title: "Webcam not available",
-    summary: "A working webcam is required for proctoring.",
-    fixHint: "Connect a webcam and allow camera permission when prompted.",
+    title: "Camera not available",
+    summary: "Camera access is required for proctoring.",
+    fixHint:
+      'Allow camera access, then Re-run. On macOS enable "upGrad Exam" under System Settings ▸ Privacy & Security ▸ Camera.',
   },
   microphone: {
     title: "Microphone not available",
-    summary: "A working microphone is required for proctoring.",
-    fixHint: "Connect a headset or mic and allow microphone permission.",
+    summary: "Microphone access is required for proctoring.",
+    fixHint:
+      'Allow microphone access, then Re-run. On macOS enable "upGrad Exam" under System Settings ▸ Privacy & Security ▸ Microphone.',
   },
   internet_speed: {
     title: "Internet too slow",
@@ -69,13 +71,22 @@ const CHECK_COPY: Partial<
   },
   multiple_monitors: {
     title: "Multiple monitors detected",
-    summary: "Only one display is allowed during the exam.",
-    fixHint: "Disconnect external monitors and use your primary screen only.",
+    summary:
+      "Only one display is allowed during the exam. External or HDMI screens are not permitted, even when mirroring your screen.",
+    fixHint:
+      "Unplug every external/HDMI monitor and turn off screen mirroring, then re-run checks. Use your built-in screen only.",
   },
   screen_recording: {
     title: "Screen recording software",
     summary: "Screen recording tools are not allowed during the exam.",
     fixHint: "Use Close on the process card, then re-run checks.",
+  },
+  ai_assistant: {
+    title: "AI assistant tool detected",
+    summary:
+      "Hidden AI assistant/overlay tools (e.g. Parakeet, Cluely, Interview Coder) are not allowed. They stay invisible to screen sharing but still run on your device.",
+    fixHint:
+      "Quit the tool completely — also remove it from Login Items so it does not relaunch — then re-run checks.",
   },
   clipboard: {
     title: "Clipboard not empty",

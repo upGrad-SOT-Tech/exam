@@ -15,6 +15,7 @@ import {
   collectVpn,
 } from "./collectors/network.collector";
 import {
+  collectAiAssistant,
   collectAnyDesk,
   collectObs,
   collectRemoteDesktop,
@@ -85,7 +86,7 @@ export async function runNativeChecks(
     ],
     [
       "multiple_monitors",
-      collectMultipleMonitors(getDefinition("multiple_monitors")),
+      collectMultipleMonitors(getDefinition("multiple_monitors"), snapshot),
     ],
     ["ram", collectRam(getDefinition("ram"), snapshot)],
     ["cpu", collectCpu(getDefinition("cpu"), snapshot)],
@@ -98,6 +99,10 @@ export async function runNativeChecks(
     [
       "screen_recording",
       collectScreenRecording(getDefinition("screen_recording"), snapshot),
+    ],
+    [
+      "ai_assistant",
+      collectAiAssistant(getDefinition("ai_assistant"), snapshot),
     ],
     [
       "running_applications",

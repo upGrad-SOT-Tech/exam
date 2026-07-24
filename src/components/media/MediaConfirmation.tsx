@@ -5,6 +5,7 @@ type MediaConfirmationProps = {
   mediaReady: boolean
   audioLevel: number
   onContinue: () => void
+  onRetry?: () => void
 }
 
 const MicBars = ({ level }: { level: number }) => {
@@ -27,7 +28,7 @@ const MicBars = ({ level }: { level: number }) => {
 }
 
 const MediaConfirmation = forwardRef<HTMLVideoElement, MediaConfirmationProps>(
-  function MediaConfirmation({ mediaReady, audioLevel, onContinue }, ref) {
+  function MediaConfirmation({ mediaReady, audioLevel, onContinue, onRetry }, ref) {
     const micLive = mediaReady && audioLevel > 8
 
     return (
@@ -127,7 +128,16 @@ const MediaConfirmation = forwardRef<HTMLVideoElement, MediaConfirmationProps>(
               </p>
             </div>
 
-            <div className="mt-auto border-t border-gray-100 p-4">
+            <div className="mt-auto space-y-2 border-t border-gray-100 p-4">
+              {!mediaReady && onRetry ? (
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  className="w-full rounded border border-[#df2428] px-4 py-3 text-sm font-bold uppercase tracking-wide text-[#df2428] transition hover:bg-[#df2428]/5"
+                >
+                  Retry camera &amp; microphone
+                </button>
+              ) : null}
               <button
                 type="button"
                 disabled={!mediaReady}

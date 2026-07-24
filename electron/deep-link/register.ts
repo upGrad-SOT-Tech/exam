@@ -64,9 +64,17 @@ export function flushPendingDeepLink(win: BrowserWindow | null) {
  * already handed its argv to the running instance through `second-instance`.
  */
 export function registerDeepLinks(getWindow: () => BrowserWindow | null): boolean {
-  if (process.defaultApp && process.argv.length >= 2) {
-    // `electron .` in development: the OS needs the interpreter *and* the app path to relaunch us,
-    // otherwise the scheme would register against the bare electron binary.
+  if (process.platform === "darwin") {
+    // macOS binds a URL scheme to a bundle through its Info.plist (CFBundleURLTypes) at install
+    // time; the path/args form below is ignored here. A runtime call from the *unpackaged* dev
+    // binary would only point upgradexam:// at the generic com.github.electron bundle that is
+    // actually running — hijacking the scheme away from the installed app and breaking every LMS
+    // launch. So on macOS we only (re)assert ownership when packaged; in dev the link is exercised
+    // through an installed/packaged build, whose Info.plist already claims the scheme.
+    if (app.isPackaged) app.setAsDefaultProtocolClient(DEEP_LINK_SCHEME)
+  } else if (process.defaultApp && process.argv.length >= 2) {
+    // `electron .` in development on Windows/Linux: the OS needs the interpreter *and* the app path
+    // to relaunch us, otherwise the scheme would register against the bare electron binary.
     app.setAsDefaultProtocolClient(DEEP_LINK_SCHEME, process.execPath, [path.resolve(process.argv[1])])
   } else {
     app.setAsDefaultProtocolClient(DEEP_LINK_SCHEME)

@@ -69,6 +69,7 @@ const CHECK_DEFINITIONS = [
   { id: "virtual_machine", label: "Virtual machine detection", severity: "block", timeoutMs: 8e3 },
   { id: "multiple_monitors", label: "Multiple monitors", severity: "block", timeoutMs: 3e3 },
   { id: "screen_recording", label: "Screen recording software", severity: "block", timeoutMs: 1e4 },
+  { id: "ai_assistant", label: "AI assistant tools", severity: "block", timeoutMs: 8e3 },
   { id: "running_applications", label: "Running applications", severity: "warn", timeoutMs: 1e4 },
   { id: "remote_desktop", label: "Remote desktop", severity: "block", timeoutMs: 1e4 },
   { id: "obs", label: "OBS", severity: "block", timeoutMs: 8e3 },
@@ -131,6 +132,24 @@ const SCREEN_RECORDING_PROCESSES = [
   "fraps",
   "nvidia shadowplay",
   "geforce experience"
+];
+const AI_ASSISTANT_PROCESSES = [
+  "parakeet",
+  "cluely",
+  "interviewcoder",
+  "interview coder",
+  "leetcodewizard",
+  "leetcode wizard",
+  "finalround",
+  "final round",
+  "lockedinai",
+  "lockedin ai",
+  "senseiai",
+  "sensei ai",
+  "interviewsidekick",
+  "interview sidekick",
+  "echoo",
+  "ultracode"
 ];
 const OBS_PROCESSES = ["obs", "obs64", "obs studio", "streamlabs"];
 const TEAMVIEWER_PROCESSES = ["teamviewer", "teamviewer_service", "teamviewer_desktop"];
@@ -206,34 +225,53 @@ function collectScreenResolution(definition) {
     { width, height, scaleFactor, minWidth: MIN_SCREEN_WIDTH, minHeight: MIN_SCREEN_HEIGHT }
   );
 }
-function collectMultipleMonitors(definition) {
-  const startedAt = Date.now();
-  const displays = screen.getAllDisplays();
-  const count = displays.length;
-  if (count <= 1) {
-    return createResult(definition, "passed", "Single monitor detected", startedAt, {
-      count,
-      displays: displays.map((display) => ({
-        id: display.id,
-        width: display.size.width,
-        height: display.size.height
-      }))
-    });
-  }
-  return createResult(
-    definition,
-    "failed",
-    `${count} monitors detected — disconnect additional displays before continuing`,
-    startedAt,
-    {
-      count,
-      displays: displays.map((display) => ({
-        id: display.id,
-        width: display.size.width,
-        height: display.size.height
-      }))
-    }
+function readPhysicalDisplays(snapshot) {
+  var _a;
+  const displays = (_a = snapshot.graphics) == null ? void 0 : _a.displays;
+  if (!Array.isArray(displays)) return [];
+  return displays.map((display) => ({
+    model: typeof display.model === "string" ? display.model : void 0,
+    connection: typeof display.connection === "string" ? display.connection : void 0,
+    builtin: typeof display.builtin === "boolean" ? display.builtin : void 0,
+    main: typeof display.main === "boolean" ? display.main : void 0,
+    width: display.currentResX ?? display.resolutionX ?? null,
+    height: display.currentResY ?? display.resolutionY ?? null
+  })).filter((display) => (display.width ?? 0) > 0 && (display.height ?? 0) > 0);
+}
+function describeDisplay(display) {
+  const parts = [display.connection, display.model].filter(
+    (part) => Boolean(part)
   );
+  return parts.length > 0 ? parts.join(" ") : "external display";
+}
+function collectMultipleMonitors(definition, snapshot) {
+  const startedAt = Date.now();
+  const electronDisplays = screen.getAllDisplays();
+  const electronCount = electronDisplays.length;
+  const physicalDisplays = readPhysicalDisplays(snapshot);
+  const physicalCount = physicalDisplays.length;
+  const externalDisplays = physicalDisplays.filter(
+    (display) => display.builtin === false
+  );
+  const count = Math.max(electronCount, physicalCount);
+  const details = {
+    count,
+    electronCount,
+    physicalCount,
+    externalCount: externalDisplays.length,
+    displays: physicalDisplays,
+    electronDisplays: electronDisplays.map((display) => ({
+      id: display.id,
+      width: display.size.width,
+      height: display.size.height
+    }))
+  };
+  if (count <= 1) {
+    return createResult(definition, "passed", "Single display detected", startedAt, details);
+  }
+  const externalLabel = externalDisplays.map(describeDisplay).join(", ");
+  const message = externalLabel ? `External display connected (${externalLabel}) — disconnect all external/HDMI screens, including mirrored ones, before continuing` : `${count} displays detected — disconnect additional displays, including mirrored/HDMI screens, before continuing`;
+  return createResult(definition, "failed", message, startedAt, details);
 }
 function collectRam(definition, snapshot) {
   const startedAt = Date.now();
@@ -492,6 +530,15 @@ function collectScreenRecording(definition, snapshot) {
     (matches) => `Screen recording software detected: ${matches.map((m) => m.name).join(", ")}`
   );
 }
+function collectAiAssistant(definition, snapshot) {
+  return collectProcessCheck(
+    definition,
+    snapshot,
+    AI_ASSISTANT_PROCESSES,
+    "No AI assistant tools detected",
+    (matches) => `AI assistant tool detected: ${matches.map((m) => m.name).join(", ")}. These hide from screen sharing — close them and re-run checks.`
+  );
+}
 function collectRunningApplications(definition, snapshot) {
   const startedAt = Date.now();
   const suspicious = findMatchingProcesses(snapshot, [
@@ -499,7 +546,8 @@ function collectRunningApplications(definition, snapshot) {
     ...SCREEN_RECORDING_PROCESSES,
     ...OBS_PROCESSES,
     ...TEAMVIEWER_PROCESSES,
-    ...ANYDESK_PROCESSES
+    ...ANYDESK_PROCESSES,
+    ...AI_ASSISTANT_PROCESSES
   ]);
   const runningCount = snapshot.processes.running;
   if (suspicious.length === 0) {
@@ -18769,7 +18817,7 @@ async function runNativeChecks(media) {
     ],
     [
       "multiple_monitors",
-      collectMultipleMonitors(getDefinition("multiple_monitors"))
+      collectMultipleMonitors(getDefinition("multiple_monitors"), snapshot)
     ],
     ["ram", collectRam(getDefinition("ram"), snapshot)],
     ["cpu", collectCpu(getDefinition("cpu"), snapshot)],
@@ -18782,6 +18830,10 @@ async function runNativeChecks(media) {
     [
       "screen_recording",
       collectScreenRecording(getDefinition("screen_recording"), snapshot)
+    ],
+    [
+      "ai_assistant",
+      collectAiAssistant(getDefinition("ai_assistant"), snapshot)
     ],
     [
       "running_applications",
@@ -18855,13 +18907,14 @@ let displayMediaHandlerInstalled = false;
 let permissionHandlerInstalled = false;
 const execFileAsync = promisify$1(execFile$1);
 const CAPTURE_PERMISSIONS = /* @__PURE__ */ new Set(["display-capture", "desktopCapturer"]);
-const developmentAllowedAppNames = ["cursor", "electron", "electron-vite-project", "node"];
+const developmentAllowedAppNames = ["cursor", "claude", "chrome", "electron", "electron-vite-project", "node"];
 const prohibitedPatterns = [
   ...REMOTE_DESKTOP_PROCESSES,
   ...SCREEN_RECORDING_PROCESSES,
   ...OBS_PROCESSES,
   ...TEAMVIEWER_PROCESSES,
-  ...ANYDESK_PROCESSES
+  ...ANYDESK_PROCESSES,
+  ...AI_ASSISTANT_PROCESSES
 ];
 const systemGuiNames = [
   "Finder",
@@ -19198,7 +19251,8 @@ function releaseWindowPolicy(win2) {
 function isAllowedApp(appInfo) {
   const label = `${appInfo.displayName} ${appInfo.processName} ${appInfo.path ?? ""}`.toLowerCase();
   if (appInfo.pid === process.pid) return "Exam application";
-  if (app.isPackaged) return null;
+  const devAppsAllowed = !app.isPackaged || process.env.EXAM_ALLOW_DEV_APPS === "1";
+  if (!devAppsAllowed) return null;
   const allowed = developmentAllowedAppNames.find((name) => label.includes(name));
   return allowed ? `Allowed for local testing: ${allowed}` : null;
 }
@@ -19446,7 +19500,9 @@ function flushPendingDeepLink(win2) {
   win2.webContents.send(DEEP_LINK_IPC.EVENT, payload);
 }
 function registerDeepLinks(getWindow) {
-  if (process.defaultApp && process.argv.length >= 2) {
+  if (process.platform === "darwin") {
+    if (app.isPackaged) app.setAsDefaultProtocolClient(DEEP_LINK_SCHEME);
+  } else if (process.defaultApp && process.argv.length >= 2) {
     app.setAsDefaultProtocolClient(DEEP_LINK_SCHEME, process.execPath, [path$4.resolve(process.argv[1])]);
   } else {
     app.setAsDefaultProtocolClient(DEEP_LINK_SCHEME);

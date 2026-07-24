@@ -575,6 +575,7 @@ export default function PreExamPage() {
               mediaReady={mediaReady}
               audioLevel={audioLevel}
               onContinue={goToCalibration}
+              onRetry={() => void startMediaPreview()}
             />
           ) : null}
 

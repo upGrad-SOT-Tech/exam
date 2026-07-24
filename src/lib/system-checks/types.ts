@@ -18,6 +18,7 @@ export type CheckId =
   | "virtual_machine"
   | "multiple_monitors"
   | "screen_recording"
+  | "ai_assistant"
   | "running_applications"
   | "remote_desktop"
   | "obs"

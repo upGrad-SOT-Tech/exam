@@ -1,5 +1,6 @@
 import type { CheckDefinition, CheckResult } from '../types'
 import {
+  AI_ASSISTANT_PROCESSES,
   ANYDESK_PROCESSES,
   OBS_PROCESSES,
   REMOTE_DESKTOP_PROCESSES,
@@ -91,6 +92,17 @@ export function collectScreenRecording(definition: CheckDefinition, snapshot: Sy
   )
 }
 
+export function collectAiAssistant(definition: CheckDefinition, snapshot: SystemSnapshot): CheckResult {
+  return collectProcessCheck(
+    definition,
+    snapshot,
+    AI_ASSISTANT_PROCESSES,
+    'No AI assistant tools detected',
+    (matches) =>
+      `AI assistant tool detected: ${matches.map((m) => m.name).join(', ')}. These hide from screen sharing — close them and re-run checks.`,
+  )
+}
+
 export function collectRunningApplications(definition: CheckDefinition, snapshot: SystemSnapshot): CheckResult {
   const startedAt = Date.now()
   const suspicious = findMatchingProcesses(snapshot, [
@@ -99,6 +111,7 @@ export function collectRunningApplications(definition: CheckDefinition, snapshot
     ...OBS_PROCESSES,
     ...TEAMVIEWER_PROCESSES,
     ...ANYDESK_PROCESSES,
+    ...AI_ASSISTANT_PROCESSES,
   ])
 
   const runningCount = snapshot.processes.running
